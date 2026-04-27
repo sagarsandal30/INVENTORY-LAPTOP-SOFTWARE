@@ -1,6 +1,15 @@
 const Software = require("../models/Software");
+const {redisClient}=require("../../Config/redisClient");
 
 
+// Clear all Laptop Model list cache keys
+const clearSoftwareCache = async () => {
+  const keys = await redisClient.keys("software:list:*");
+
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
+};
 
 // CREATE a new Software
 const createSoftware = async (softwareData) => {
@@ -8,6 +17,8 @@ const createSoftware = async (softwareData) => {
     const software=new Software(softwareData);
 
     await software.save();
+    await redisClient.del("dashboard:data");
+    await clearSoftwareCache();
     return software;
 
 }
@@ -27,6 +38,15 @@ const getSoftware = async (page,limit,search,catFilter) => {
     if(catFilter&&catFilter!=="All"){
         filter.category=catFilter;
     }
+        const cacheKey = `software:list:page=${page}:limit=${limit}:search=${search}:catFilter=${catFilter}`;
+        const cachedData = await redisClient.get(cacheKey);
+        if (cachedData) {
+        console.log("Software list from Redis");
+        return JSON.parse(cachedData);
+        }
+    console.log("Software list from MongoDB");
+
+
     const allSoftware=await Software.find();
     const existingSoftware = await  Software.find(filter).sort({createdAt:-1}).skip(skip).limit(limit);
     if (!existingSoftware) {
@@ -67,7 +87,7 @@ const critical = await Software.countDocuments({
     console.log(stats[0]?.usedLicenses);
     console.log(stats[0]?.totalLicenses);
 
-    return {existingSoftware,
+     const result= {existingSoftware,
         allSoftware,
         totalPages,
         currentPage:page,
@@ -79,6 +99,8 @@ const critical = await Software.countDocuments({
         critical:critical,
         // upcoming:upcoming
     }};
+    await redisClient.setEx(cacheKey,60,JSON.stringify(result));
+    return result;
 }
 
 // READ a single SoftwareModel by its specific MongoDB ID
@@ -93,6 +115,10 @@ const getOneSoftware=async(softwareId)=>{
 // Delete Software
 const removeSoftware=async(softwareId)=>{
     const deleteSoftware=await Software.deleteOne({_id:softwareId});
+   await redisClient.del("dashboard:data");
+   await redisClient.del(`software:${softwareId}`);
+   await clearSoftwareCache();
+
     if(deleteSoftware.deletedCount === 0){
         throw new Error("No software found for delete");
     }
@@ -101,9 +127,10 @@ const removeSoftware=async(softwareId)=>{
 // Update software
 const modifySoftware=async(softwareId,data)=>{
     const updated=await Software.findByIdAndUpdate(softwareId,data ,{
-      new: true,
+      returnDocument: "after",
       runValidators: true
     });
+    await clearSoftwareCache();
     if(!updated){
         throw new Error("No software found for update");
     }
