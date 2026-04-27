@@ -4,17 +4,32 @@ const Employee = require("../models/Employee");
 const LaptopAsset = require("../models/Laptop");
 const LaptopModel = require("../models/LaptopModel");
 const mongoose = require("mongoose");
+const {redisClient}=require("../../Config/redisClient")
 
  const showDashboardData= async()=>{
+
+   const cacheKey = "dashboard:data";
+   // 1. Check Redis first
+   const cachedData = await redisClient.get(cacheKey);
+
+ if (cachedData) {
+    console.log("Dashboard data from Redis");
+    return JSON.parse(cachedData);
+  }
+
+
+  console.log("Dashboard data from MongoDB");
+
+
    const totalLaptops= await LaptopAsset.countDocuments();
    const totalSoftware=await Software.countDocuments();
    const activeEmployees=await Employee.countDocuments({status:"Active"});
    const totalAssignemnts=await Assignment.countDocuments({status:"Assigned"});
    const totalEmployees=await Employee.countDocuments();
    const avaliableLaptops=await LaptopAsset.countDocuments({status:"Available"});
+   
  const underRepairLaptops=await LaptopAsset.countDocuments({status:"Under Repair"});
  const assignedLaptops=await LaptopAsset.countDocuments({status:"Assigned"});
-
 const recentAssignments = await Assignment.find()
     .sort({ createdAt: -1 })
     .limit(5)
@@ -52,8 +67,8 @@ const recentAssignments = await Assignment.find()
     };
   });
 
-   return{
-    stats:{
+   const dashboardData={
+stats:{
         totalLaptops,
         totalSoftware,
         activeEmployees,
@@ -64,7 +79,12 @@ const recentAssignments = await Assignment.find()
         assignedLaptops  
     },
     recentActivity
-   };
+   }
+    
+    // 2. Save in Redis for 60 seconds
+  await redisClient.setEx(cacheKey, 60, JSON.stringify(dashboardData));
+
+  return dashboardData;
 }
 
 // =========================

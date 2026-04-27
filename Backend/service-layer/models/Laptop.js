@@ -21,10 +21,10 @@ const LaptopAssetSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["Avaliable", "Assigned", "Under Repair"],
+      enum: ["Available", "Assigned", "Under Repair","Retired"],
       default: "Available"
     },
-
+    
     condition: {
       type: String,
       enum: ["Good", "Damaged", "Needs Repair"],

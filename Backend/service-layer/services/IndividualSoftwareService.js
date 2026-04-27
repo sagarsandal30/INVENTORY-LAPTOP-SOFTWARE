@@ -1,4 +1,4 @@
-const Software = require("../models/Software");
+const Software = require("../models/IndividualSoftware");
 
 
 
@@ -77,7 +77,7 @@ const critical = await Software.countDocuments({
         totalLicenses:stats[0]?.totalLicenses,
         usedLicenses:stats[0]?.usedLicenses,
         critical:critical,
-        // upcoming:upcoming
+        upcoming:upcoming
     }};
 }
 

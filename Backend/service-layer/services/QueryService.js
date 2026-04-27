@@ -1,4 +1,5 @@
 const Query = require("../models/Query");
+const User = require("../models/User");
 const {
   sendQueryNotificationEmail,
   sendQueryConfirmationEmail,
@@ -8,10 +9,22 @@ const {
 // Create a new query (employee only)
 // ---------------------------------------------------------------------------
 const createQuery = async (data,params) => {
-
+  const userId = params.id;
+  const user = await User.findById(userId).select("-password -confirmPassword");
+  if(!user){
+    const err = new Error("User not found.");
+  }
+  console.log("the details",user)
 const{queryType,subject,description,priority}=data;
- const { id, username, email } =params; // from JWT — never trust client input for these fields
-  // Validation
+const id =user._id;
+const username = `${user.firstName} ${user.lastName}`;
+const email = user.email;
+
+console.log("after fetch data ",id,username,email)
+
+
+
+// Validation
   
   if (!queryType || !subject || !description || !priority) {
     const err = new Error("queryType, subject, description, and priority are required.");
@@ -40,8 +53,8 @@ const{queryType,subject,description,priority}=data;
 // ---------------------------------------------------------------------------
 // Get all queries for the logged-in employee (paginated)
 // ---------------------------------------------------------------------------
-const getMyQueries = async (  page , limit,  status ) => {
-  const filter = {};
+const getMyQueries = async ( userId, page , limit,  status ) => {
+  const filter = {employeeId: userId };
 
   if (status && status!=="All" ){
  filter.status  = status;
@@ -91,17 +104,17 @@ const getQueryById = async ({ queryId, userId, role }) => {
 // ---------------------------------------------------------------------------
 // Admin: Get all queries (paginated + filterable)
 // ---------------------------------------------------------------------------
-const getAllQueries = async ({ page = 1, limit = 10, status, queryType, priority }) => {
+const getAllQueries = async (page, limit , status, queryType, priority ) => {
   const filter = {};
   if (status)    filter.status    = status;
   if (queryType) filter.queryType = queryType;
   if (priority)  filter.priority  = priority;
 
   const skip  = (page - 1) * limit;
-  const total = await Query.countDocuments(filter);
+  const totalQueries = await Query.countDocuments();
 
   const queries = await Query.find(filter)
-    .populate("employeeId", "name email department")
+    .populate("employeeId", "firstName lastName email department")
     .populate("assignedTo",  "name email")
     .sort({ createdAt: -1 })
     .skip(skip)
@@ -110,12 +123,10 @@ const getAllQueries = async ({ page = 1, limit = 10, status, queryType, priority
 
   return {
     queries,
-    pagination: {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    },
+      totalQueries,
+      currentPage:page,
+      totalPages: Math.ceil(totalQueries / limit),
+  
   };
 };
 

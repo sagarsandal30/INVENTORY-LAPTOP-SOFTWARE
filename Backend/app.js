@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 require('dotenv').config();
 
+//connect Redis
+const { connectRedis } = require("./Config/redisClient");
 // Connect DB
 const connectDB = require("./service-layer/db/connect");
 const queryRoutes = require("./web-layer/routes/QueryRoutes");
@@ -32,12 +34,12 @@ app.use("/api",dashboardRouter);
 app.use("/api/settings", settingsRouter);
 app.use("/api/queries", queryRoutes);
 
-
 // Start server
 const PORT = process.env.PORT || 5000;
 
 const start = async () => {
   try {
+  await  connectRedis();
     await connectDB();
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

@@ -26,12 +26,12 @@ queryRoutes.post(  "/", allowRoles("Employee"),submitQuery);
 queryRoutes.get( "/my",  allowRoles("Employee"),getMyQueries);
 
 // Admin / IT routes
-queryRoutes.get("/stats", allowRoles("Admin", "IT-Operations"),getQueryStats);
-queryRoutes.get("/",allowRoles("Admin", "IT-Operations"),getAllQueries);
-queryRoutes.patch("/:id",allowRoles("Admin", "IT-Operations"),updateQuery);
-queryRoutes.delete("/:id",allowRoles("Admin"),deleteQuery);
+queryRoutes.get("/stats", allowRoles("Admin", "IT Operations"),getQueryStats);
+queryRoutes.get("/",allowRoles("Admin", "IT Operations"),getAllQueries);
+queryRoutes.patch("/:id",allowRoles("Admin", "IT Operations"),updateQuery);
+queryRoutes.delete("/:id",allowRoles("Admin","IT Operations"),deleteQuery);
 
 // Shared: employee (own) or admin/IT (any) — access control inside service
-queryRoutes.get("/:id", allowRoles("Employee", "Admin", "IT-Operations"), getQueryById);
+queryRoutes.get("/:id", allowRoles("Employee", "Admin", "IT Operations"), getQueryById);
 
 module.exports = queryRoutes;

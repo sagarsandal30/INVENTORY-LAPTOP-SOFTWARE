@@ -12,14 +12,9 @@ const submitQuery = asyncHandler(async (req, res) => {
   
   const params = {
     id:req.user.id,
-    username:req.user.username,
-    email:req.user.email,
-  };
-  console.log(params.username)
-  
-  console.log("hrrrr",req.user);
-
-  
+    
+  };  
+ 
   const query = await queryService.createQuery(req.body,params);
 
   res.status(201).json({
@@ -34,9 +29,10 @@ const submitQuery = asyncHandler(async (req, res) => {
 // Employee: Get their own queries (paginated)
 // ---------------------------------------------------------------------------
 const getMyQueries = asyncHandler(async (req, res) => {
+  const userId=req.user.id;
   const { page, limit, status } = req.query;
 
-  const result = await queryService.getMyQueries(page, limit, status);
+  const result = await queryService.getMyQueries(userId,page, limit, status);
 
   res.status(200).json({
     success: true,
@@ -62,17 +58,22 @@ const getQueryById = asyncHandler(async (req, res) => {
 // GET /api/queries  (admin/IT only)
 // ---------------------------------------------------------------------------
 const getAllQueries = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, status, queryType, priority } = req.query;
-
-  const result = await queryService.getAllQueries({
-    page:      parseInt(page),
-    limit:     parseInt(limit),
-    status,
-    queryType,
-    priority,
-  });
-
-  res.status(200).json({ success: true, ...result });
+  try{
+    const { page, limit , status, queryType, priority } = req.query;
+  
+  const result = await queryService.getAllQueries(page, limit , status, queryType, priority);
+   
+  res.status(200).json({
+     success: true,
+      ...result
+     });
+    }catch(error){
+      res.status(400).json({ 
+        success: false,
+         message: error.message 
+        });
+    }
+  
 });
 
 // ---------------------------------------------------------------------------

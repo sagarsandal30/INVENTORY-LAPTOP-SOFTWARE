@@ -48,13 +48,11 @@ location:{
 joinDate:{
     type:Date,
     required:true
-
 },
 status:{
     type:String,
     enum:["Active","Inactive"],
     default:"Active",
-
 },
 laptopAssigned:{
     type:Number,

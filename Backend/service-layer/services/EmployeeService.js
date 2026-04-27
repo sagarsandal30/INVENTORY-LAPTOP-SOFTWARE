@@ -1,5 +1,16 @@
 const Employee = require("../models/Employee");
 const mongoose = require("mongoose");
+const {redisClient}=require("../../Config/redisClient")
+
+// Clear all employee list cache keys
+const clearEmployeeListCache = async () => {
+  const keys = await redisClient.keys("employee:list:*");
+
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
+};
+
 
 // CREATE Employee
 const createEmployee = async (employeeData) => {
@@ -20,6 +31,9 @@ const createEmployee = async (employeeData) => {
   }
 
   const employee = await Employee.create(employeeData);
+   // 🔥 clear cache here
+    await redisClient.del("dashboard:data");
+  await clearEmployeeListCache();
   return employee;
 };
 
@@ -42,6 +56,17 @@ const getAllEmployee = async (page,limit,search,status) => {
   if(status&&status!=="All"){
     query.status=status;
   }
+
+  const cacheKey = `employee:list:page=${page}:limit=${limit}:search=${search}:status=${status}`;
+  const cachedData = await redisClient.get(cacheKey);
+   if(!cachedData){
+    console.log("Employee list from MongoDB");
+   }
+    if (cachedData) {
+    console.log("Employee list from Redis");
+    return JSON.parse(cachedData);
+  }
+
 const totalEmployees= await Employee.countDocuments();
 console.log(totalEmployees);
   const employees = await Employee.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit);
@@ -58,7 +83,8 @@ console.log(totalEmployees);
       }
     ]);
     
-return {employees,
+const result= {
+  employees,
    stats:{
     totalEmployees:totalEmployees,
     active:active,
@@ -69,7 +95,8 @@ return {employees,
 totalPages,
 currentPage:page
 }
-  // return {employees,totalEmployees,totalPages,currentPage:page};
+  await redisClient.setEx(cacheKey,60,JSON.stringify(result));
+  return result;
     
 };
 
@@ -79,12 +106,21 @@ const getOneEmployee = async (employeeMongoId) => {
     throw new Error("Invalid employee ID.");
   }
 
+  const cacheKey = `employee:${employeeMongoId}`;
+    const cachedEmployee = await redisClient.get(cacheKey);
+if (cachedEmployee) {
+    console.log("Single employee from Redis");
+    return JSON.parse(cachedEmployee);
+  }
+
+
+
   const employee = await Employee.findById(employeeMongoId);
 
   if (!employee) {
     throw new Error("Employee not found.");
   }
-
+await redisClient.setEx(cacheKey,60,JSON.stringify(employee));
   return employee;
 };
 
@@ -102,6 +138,9 @@ const updateEmployee = async (employeeMongoId, updateData) => {
       runValidators: true
     }
   );
+    await redisClient.del("dashboard:data");
+  await redisClient.del(`employee:${employeeMongoId}`);
+    await clearEmployeeListCache();
 
   if (!updatedEmployee) {
     throw new Error("Employee not found.");
@@ -119,6 +158,11 @@ const deleteEmployee = async (employeeMongoId) => {
   }
 
   const deletedEmployee = await Employee.findByIdAndDelete(employeeMongoId);
+
+    // 🔥 clear cache here
+    await redisClient.del("dashboard:data");
+  await redisClient.del(`employee:${employeeMongoId}`);
+    await clearEmployeeListCache();
 
   if (!deletedEmployee) {
     throw new Error("Employee not found.");

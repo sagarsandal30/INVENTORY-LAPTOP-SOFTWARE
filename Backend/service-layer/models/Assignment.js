@@ -31,7 +31,6 @@ const assignmentSchema=new mongoose.Schema(
     
     assetName:{
       type:String,
-     
     },
     
    

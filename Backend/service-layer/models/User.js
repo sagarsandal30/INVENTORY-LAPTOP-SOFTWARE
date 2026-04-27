@@ -9,7 +9,7 @@ const UserSchema = new mongoose.Schema(
     },
     lastName: { 
       type: String, 
-      required: true 
+       required:true
     },
     email: { 
       type: String,
@@ -18,8 +18,8 @@ const UserSchema = new mongoose.Schema(
     },
     phone: { 
       type: String ,
-      required:true,
-      unique:true
+      default: null,
+      
     },
     department: { 
       type: String ,
@@ -35,21 +35,22 @@ const UserSchema = new mongoose.Schema(
   "Analytics",
   "Legal",
   "Administration"],
-  required:true
+ 
     },
     role: {
       type: String,
       enum: ["Employee", "Manager", "Admin","IT Operations"],
       default: "Employee",
     },
-    password: {
-       type: String,
-       required: true
+    password:{
+  type: String,
+      required:true,
     },
-    confirmPassword:{
-      type: String,
-      required: true
-    }
+    
+     phone: {
+  type: String,
+  default: null,
+},
   },
   { timestamps: true }
 );
@@ -61,7 +62,7 @@ UserSchema.pre("save", async function () {
    return;
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
- this.confirmPassword=await bcrypt.hash(this.confirmPassword, salt);
+//  this.confirmPassword=await bcrypt.hash(this.confirmPassword, salt);
 });
 
 // Helper method to compare passwords

@@ -7,7 +7,6 @@ const SoftwareSchema = new mongoose.Schema(
       required: true,
       trim: true
     },
-
     vendor: {
       type: String,
       required: true,
@@ -24,12 +23,6 @@ const SoftwareSchema = new mongoose.Schema(
         "Other"
       ]
     },
-
-    version: {
-      type: String,
-      trim: true
-    },
-
     category: {
       type: String,
       enum: [
@@ -45,7 +38,6 @@ const SoftwareSchema = new mongoose.Schema(
       ],
       default: "Productivity"
     },
-
     licenseType: {
       type: String,
       enum: ["Subscription", "Perpetual", "Per Seat", "Open Source"],
@@ -75,11 +67,7 @@ const SoftwareSchema = new mongoose.Schema(
       }
     },
     
-
-    expiryDate: {
-      type: Date,
-      required: true
-    },
+    
 
     costPerMonth: {
       type: Number,

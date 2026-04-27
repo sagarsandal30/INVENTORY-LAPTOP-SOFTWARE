@@ -24,18 +24,23 @@ const LaptopSchema = new mongoose.Schema(
     ],
     required:true,
     },
+
     processor:{
     type:String,
     required:true
     },
+
     ram:{
         type:String,
         required:true
     },
+
     storage:{
         type:String,
         required:true
     },
+   
+
      graphicsCard: { 
       type: String 
     },
@@ -64,6 +69,10 @@ const LaptopSchema = new mongoose.Schema(
     ] ,
     required:true
     },
+    purchaseDate:{
+        type: Date,
+        required:true
+    },
     warrantyPeriod: { 
       type: String 
     },
@@ -76,6 +85,7 @@ const LaptopSchema = new mongoose.Schema(
     },
     totalAssets: {
       type: Number,
+      required:true,
       default: 0,
       min: 0
     },
@@ -90,10 +100,11 @@ const LaptopSchema = new mongoose.Schema(
     underRepair:{
       type:Number,
       default:0
+    },
+    retired:{
+      type:Number,
+      default:0
     }
-    
-   
-   
 },
  { 
     // Automatically adds `createdAt` and `updatedAt` timestamps
