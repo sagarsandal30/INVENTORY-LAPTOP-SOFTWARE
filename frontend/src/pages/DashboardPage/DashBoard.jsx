@@ -20,7 +20,7 @@ const initialStats = {
   totalSoftware: 0,
   totalEmployees: 0,
   totalAssignemnts: 0,
-  availableLaptops: 0,
+  avaliableLaptops: 0,
   assignedLaptops: 0,
   underRepairLaptops: 0,
   activeEmployees: 0,
@@ -130,7 +130,7 @@ const Dashboard = () => {
     Number(stats.totalLaptops) > 0 ? Number(stats.totalLaptops) : 1;
 
   const availablePercent = Math.round(
-    (Number(stats.availableLaptops || 0) / totalLaptopBase) * 100
+    (Number(stats.avaliableLaptops || 0) / totalLaptopBase) * 100
   );
   const assignedPercent = Math.round(
     (Number(stats.assignedLaptops || 0) / totalLaptopBase) * 100
@@ -263,7 +263,7 @@ const Dashboard = () => {
         <div className="quick-stats">
           <div className="quick-stat-item">
             <div className="quick-stat-label">Available Laptops</div>
-            <div className="quick-stat-value">{stats.availableLaptops}</div>
+            <div className="quick-stat-value">{stats.avaliableLaptops}</div>
             <div className="quick-stat-bar">
               <div
                 className="quick-stat-progress"

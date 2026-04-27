@@ -39,6 +39,7 @@ import Sidebar from "../../components/sideBar/SideBar";
 import {
   createLaptopAsset,
   getLaptopAssets,
+  getLaptopAssetById,
   deleteLaptopAssetById,
   updateLaptopAssetById,
   getLaptopModels
@@ -55,13 +56,14 @@ const NAV_ITEMS = [
   { icon: Bell, label: "Notifications", id: "notifications" },
 ];
 
-const STATUSES = ["All", "Avaliable", "Assigned", "Under Repair"];
+const STATUSES = ["All", "Avaliable", "Assigned", "Under Repair","Retired"];
 const CONDITIONS = ["All", "Good", "Damaged", "Needs Repair"];
 
 const EMPTY_FORM = {
   modelName: "",
   laptopModelId: "",
   serialNumber: "",
+  
   status: "Avaliable",
   condition: "Good",
   assignedTo: null,
@@ -93,10 +95,6 @@ export default function LaptopAssets() {
 
   const { modelId } = useParams();
   console.log(modelId);
-
-
-
-
 
 
   /* ── Toast notification ── */
@@ -197,6 +195,8 @@ export default function LaptopAssets() {
             asset._id === editItem._id ? data.updated : asset,
           ),
         );
+        showToast("Laptop asset updated successfully", "success");
+        setShowModal(false);
       } else {
         const data = await createLaptopAsset(formData);
         setAssets((pre) => [data.newLaptop, ...pre]);
@@ -215,6 +215,27 @@ export default function LaptopAssets() {
       showToast(errorMessage, "error");
     }
   };
+  
+const getModelName = (laptopModelId) => {
+  if (!laptopModelId) 
+    return "N/A";
+
+  if (typeof laptopModelId === "object") {
+    return laptopModelId.modelName || "N/A";
+  }
+
+  const model = laptopModels.find((m) => m._id === laptopModelId);
+  return model ? model.modelName : "N/A";
+};
+
+ const handleShowDetail=async(details)=>{
+    try{
+      setShowDetail(details);
+      const data=await getLaptopAssetById(showDetail._id);
+  }catch(error){
+      console.log(error);
+  }
+}
 
   const handleDelete = async (id) => {
     try {
@@ -245,7 +266,8 @@ export default function LaptopAssets() {
 
   /* ── Get employee name ── */
   const getEmployeeName = (assignedTo) => {
-    if (!assignedTo) return "Unassigned";
+    if (!assignedTo) 
+      return "Unassigned";
     const employee = employees.find(
       (e) => e._id === assignedTo._id || e._id === assignedTo,
     );
@@ -533,7 +555,7 @@ export default function LaptopAssets() {
                             <button
                               className="la-action-btn la-action-btn--view"
                               title="View"
-                              onClick={() => setShowDetail(a)}
+                              onClick={() => handleShowDetail(a)}
                             >
                               <Eye size={15} />
                             </button>
@@ -572,7 +594,7 @@ export default function LaptopAssets() {
                     className={`emp-btn-page emp-btn-page-nav `}
                     onClick={() => handlePageChange(currentPage-1)}
                     disabled={currentPage===1}
-                c   >
+                 >
                     <ChevronLeft size={16} />
                 Previous
                   </button>
@@ -675,6 +697,7 @@ export default function LaptopAssets() {
                         <option>Avaliable</option>
                         <option>Assigned</option>
                         <option>Under Repair</option>
+                        <option>Retired</option>
                       </select>
                     </div>
                     <div className="la-form-group">
@@ -779,7 +802,7 @@ export default function LaptopAssets() {
               <div className="la-modal-body">
                 <div className="la-detail-grid">
                   <div className="la-detail-card">
-                    <span className="la-detail-label">Model Name</span>
+                    <label className="la-detail-label">Model Name</label>
                     <span className="la-detail-value">
                       {getModelName(showDetail.laptopModelId)}
                     </span>

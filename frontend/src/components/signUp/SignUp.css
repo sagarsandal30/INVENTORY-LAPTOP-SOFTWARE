@@ -512,7 +512,15 @@
 
 /* ── Social button ── */
 .social-login {
-  margin-bottom: 20px;
+  width: 100%;
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+.google-auth-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .social-btn {

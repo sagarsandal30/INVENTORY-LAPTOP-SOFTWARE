@@ -3,6 +3,7 @@ import "./AddEditLaptopModal.css";
 import { X, Save, Laptop } from "lucide-react";
 
 const AddEditLaptopModal = ({ isOpen, onClose, model, onSave }) => {
+
   const EMPTY_FORM={
     modelName: "",
     brand: "",
@@ -13,6 +14,7 @@ const AddEditLaptopModal = ({ isOpen, onClose, model, onSave }) => {
     graphicsCard: "",
     weight: "",
     batteryLife: "",
+    purchaseDate:"",
     ports: "",
     operatingSystem: "",
     warranty: "",
@@ -37,6 +39,7 @@ const AddEditLaptopModal = ({ isOpen, onClose, model, onSave }) => {
         graphicsCard: model.graphicsCard || "",
         weight: model.weight || "",
         batteryLife: model.batteryLife || "",
+        purchaseDate: model.purchaseDate ? new Date(model.purchaseDate).toISOString().split("T")[0] : "",
         ports: model.ports || "",
         operatingSystem: model.operatingSystem || "",
         warranty: model.warranty || "",
@@ -47,21 +50,22 @@ const AddEditLaptopModal = ({ isOpen, onClose, model, onSave }) => {
     } else {
       // Reset form for new model
       setFormData({
-        modelName: "",
-        brand: "",
-        processor: "",
-        ram: "",
-        storage: "",
-        screenSize: "",
-        graphicsCard: "",
-        weight: "",
-        batteryLife: "",
-        ports: "",
-        operatingSystem: "",
-        warranty: "",
-        price: "",
-        totalAssets:"",
-        additionalSpecifications: "",
+         modelName: "",
+    brand: "",
+    processor: "",
+    ram: "",
+    storage: "",
+    screenSize: "",
+    graphicsCard: "",
+    weight: "",
+    batteryLife: "",
+    purchaseDate:"",
+    ports: "",
+    operatingSystem: "",
+    warranty: "",
+    price: "",
+    totalAssets:"",
+    additionalSpecifications: "",
       });
     }
     setErrors({});
@@ -106,6 +110,15 @@ const AddEditLaptopModal = ({ isOpen, onClose, model, onSave }) => {
     if(!formData.operatingSystem){
       newErrors.operatingSystem="Operating System is required";
   }
+  if(!formData.price){
+    newErrors.price="Price is required";
+  }
+  if(!formData.totalAssets){
+    newErrors.totalAssets="Total Assets is required";
+  }
+  if(!formData.purchaseDate){
+    newErrors.purchaseDate="Purchase Date is required";
+  }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -115,27 +128,29 @@ const AddEditLaptopModal = ({ isOpen, onClose, model, onSave }) => {
 const handleSubmit = async (e) => {
   e.preventDefault();
 
-  if (validateForm()) {
+  if(validateForm()) {
     onSave(formData);
   }
 };
 
   const handleCancel = () => {
     setFormData({
-      modelName: "",
-      brand: "",
-      processor: "",
-      ram: "",
-      storage: "",
-      screenSize: "",
-      graphicsCard: "",
-      weight: "",
-      batteryLife: "",
-      ports: "",
-      operatingSystem: "",
-      warranty: "",
-      price: "",
-      additionalSpecifications: "",
+       modelName: "",
+    brand: "",
+    processor: "",
+    ram: "",
+    storage: "",
+    screenSize: "",
+    graphicsCard: "",
+    weight: "",
+    batteryLife: "",
+    purchaseDate:"",
+    ports: "",
+    operatingSystem: "",
+    warranty: "",
+    price: "",
+    totalAssets:"",
+    additionalSpecifications: "",
     });
     setErrors({});
     onClose();
@@ -387,7 +402,9 @@ const handleSubmit = async (e) => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Price (₹)</label>
+                  <label className="form-label">Price (₹)
+                   <span className="required">*</span>
+                  </label>
                   <input
                     type="number"
                     name="price"
@@ -398,7 +415,9 @@ const handleSubmit = async (e) => {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Total Assets</label>
+                  <label className="form-label">Total Assets
+                    <span className="required">*</span>
+                  </label>
                   <input
                     type="number"
                     name="totalAssets"
@@ -409,6 +428,20 @@ const handleSubmit = async (e) => {
                   />
                 </div>
               </div>
+
+              <div className="form-group">
+                  <label className="form-label">Purchase Date
+                    <span className="required">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    name="purchaseDate"
+                    value={formData.purchaseDate}
+                    onChange={handleChange}
+                    className="form-input"
+                    placeholder="e.g., 3 years"
+                  />
+                </div>
 
               <div className="form-group">
                 <label className="form-label">Additional Specifications</label>

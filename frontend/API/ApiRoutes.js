@@ -1,6 +1,7 @@
 export const APIRoutes={
     USER_REGISTER:"auth/register",
     USER_LOGIN:"auth/login",
+    GOOGLE_USER:"auth/google",
     USER_VERIFY:"auth/verify",
     EMPLOYEE:"employee",
    

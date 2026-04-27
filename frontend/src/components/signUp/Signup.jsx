@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import "./Signup.css";
 
+
 const SignUp = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -473,6 +474,7 @@ const SignUp = () => {
             </div>
 
             {/* ── Google ── */}
+            
             <div className="social-login">
               <button type="button" className="social-btn">
                 <svg viewBox="0 0 24 24" width="20" height="20">

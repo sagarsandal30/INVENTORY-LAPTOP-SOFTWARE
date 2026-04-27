@@ -63,9 +63,7 @@ const EMPTY_FORM = {
   licenseType: "Subscription",
   vendor: "",
   totalLicenses: "",
-  expiryDate: "",
   costPerMonth: "",
-  version: "",
   notes: "",
 };
 
@@ -75,7 +73,7 @@ const initial_stats = {
   totalLicenses: 0,
   usedLicenses: 0,
   critical: 0,
-  upcoming: 0,
+  // upcoming: 0,
 };
 
 const Software = () => {
@@ -138,7 +136,6 @@ const Software = () => {
     if (!f.totalLicenses || Number(f.totalLicenses) < 1) {
       e.totalLicenses = "Must be at least 1";
     }
-    if (!f.expiryDate) e.expiryDate = "Expiry date is required";
     if (f.costPerMonth === "" || Number(f.costPerMonth) < 0) {
       e.cost = "Enter a valid cost";
     }
@@ -161,11 +158,7 @@ const Software = () => {
       licenseType: item.licenseType || "Subscription",
       vendor: item.vendor || "",
       totalLicenses: item.totalLicenses || "",
-      expiryDate: item.expiryDate
-        ? new Date(item.expiryDate).toISOString().split("T")[0]
-        : "",
       costPerMonth: item.costPerMonth || "",
-      version: item.version || "",
       notes: item.notes || "",
     });
     setFormErrors({});
@@ -344,7 +337,7 @@ const Software = () => {
               <Clock size={22} />
             </div>
             <div>
-              <div className="sw-stat-value">{stats.upcoming}</div>
+              {/* <div className="sw-stat-value">{stats.upcoming}</div> */}
               <div className="sw-stat-label">Upcoming Renewals</div>
             </div>
           </div>
@@ -413,7 +406,6 @@ const Software = () => {
                 <th>License Type</th>
                 <th>Licenses</th>
                 <th>Usage</th>
-                <th>Expiry</th>
                 <th>Cost/mo</th>
                 <th>Actions</th>
               </tr>
@@ -512,7 +504,7 @@ const Software = () => {
                         </div>
                       </td>
 
-                      <td>
+                      {/* <td>
                         <div className="sw-expiry">
                           <Calendar size={13} />
                           <span>
@@ -546,7 +538,7 @@ const Software = () => {
                             Expired
                           </div>
                         )}
-                      </td>
+                      </td> */}
 
                       <td>
                         <span className="sw-cost">
@@ -768,11 +760,11 @@ const Software = () => {
                   </div>
 
                   <div className="sw-form-row">
-                    <div className="sw-form-group">
-                      <label>
+                    {/* <div className="sw-form-group"> */}
+                      {/* <label>
                         Expiry Date <span style={{ color: "#ef4444" }}>*</span>
-                      </label>
-                      <input
+                      </label> */}
+                      {/* <input
                         type="date"
                         name="expiryDate"
                         value={formData.expiryDate}
@@ -782,13 +774,13 @@ const Software = () => {
                             ? "sw-input sw-input--error"
                             : "sw-input"
                         }
-                      />
-                      {formErrors.expiryDate && (
+                      /> */}
+                      {/* {formErrors.expiryDate && (
                         <span className="sw-field-error">
                           {formErrors.expiryDate}
                         </span>
                       )}
-                    </div>
+                    </div> */}
 
                     <div className="sw-form-group">
                       <label>

@@ -33,6 +33,8 @@ import Navbar from "../../components/navBar/NavBar";
 import Sidebar from "../../components/sideBar/SideBar";
 
 const Settings = () => {
+    // const existingUser  = JSON.parse(localStorage.getItem("User"));
+
   const [activeTab, setActiveTab] = useState("profile");
   const [toast, setToast] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -41,6 +43,7 @@ const Settings = () => {
 
   // Profile Settings
   const [profileData, setProfileData] = useState({});
+  
 
   const fetchProfile = async () => {
       try {
@@ -106,16 +109,24 @@ const Settings = () => {
 
   const handleSaveProfile = async () => {
     try {
-      await updateProfileDetails(profileData);
+     const data= await updateProfileDetails(profileData);
+      console.log("Updated User data",data);
+      console.log(data.data);
+
+  //     const updatedUser = {
+  //   ...existingUser,
+  //   ...data.data,
+  // };
+  console.log(data.data)
+
+      if(data.data){
+        localStorage.setItem("User",JSON.stringify(data.data));
+      }
       showToast("Profile updated successfully");
     } catch (error) {
       showToast(error.message || "Failed to update profile", "error");
     }
   };
-
-  
-
- 
 
   const handleSaveSecurity = async () => {
     if (securityData.newPassword !== securityData.confirmPassword) {

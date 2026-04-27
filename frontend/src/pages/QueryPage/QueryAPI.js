@@ -22,7 +22,7 @@ export const submitQuery = async (queryData) => {
   }
 };
 
-export const getMyQueries = async (page,limit,filterStatus) => {
+export const getMyQueries = async (page,limit,status) => {
   try {
     const token = localStorage.getItem("token");
 
@@ -32,7 +32,7 @@ export const getMyQueries = async (page,limit,filterStatus) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        params:{page,limit,filterStatus},
+        params:{page,limit,status},
       }
     );
 

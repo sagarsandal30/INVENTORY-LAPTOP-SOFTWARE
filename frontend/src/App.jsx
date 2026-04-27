@@ -106,6 +106,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        
         <Route
   path="/viewAssets"
   element={

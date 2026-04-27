@@ -284,10 +284,12 @@ useEffect(()=>{
                 <th>RAM</th>
                 <th>Storage</th>
                 <th>Screen</th>
+                <th>Purchase Date</th>
                 <th>Total Assets</th>
                 <th>Available</th>
-                <th>In Use</th>
+                <th>Assigned</th>
                 <th>Under Repair</th>
+                <th>Retired</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -310,6 +312,18 @@ useEffect(()=>{
                     <td>{model.ram}</td>
                     <td>{model.storage}</td>
                     <td>{model.screenSize}</td>
+                     <td>
+                      <span>
+                      {new Date(model.purchaseDate).toLocaleDateString(
+                              "en-GB",
+                              {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              }
+                            )}
+                          </span></td>  
+
                     <td>
                       <span className="badge-table badge-total">
                         {model.totalAssets}
@@ -328,6 +342,11 @@ useEffect(()=>{
                     <td>
                       <span className="badge-table badge-repair">
                         {model.underRepair}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="badge-table badge-repair">
+                        {model.retired}
                       </span>
                     </td>
                     <td>

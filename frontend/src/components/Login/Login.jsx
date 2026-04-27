@@ -208,6 +208,7 @@ const Login = () => {
             </div>
 
             {/* Social Login (Optional) */}
+            
             <div className="social-login">
               <button type="button" className="social-btn google-btn">
                 <svg viewBox="0 0 24 24" width="20" height="20">
@@ -230,9 +231,9 @@ const Login = () => {
                 </svg>
                 Continue with Google
               </button>
-            </div>
+            </div> 
 
-            {/* Sign Up Link */}
+            {/* {/* Sign Up Link */}
             <p className="signup-link">
               Don't have an account? <Link to="/signup">Sign Up</Link>
             </p>
