@@ -39,7 +39,6 @@ const getLaptop = async (page, limit, modelId,search,statusFilter,conditionFilte
  const allLaptopAssets=await LaptopAsset.find();
 
   const existingLaptopAssets = await LaptopAsset.find({...filter, laptopModelId: modelId })
-   
     .sort({ createdAt: 1 })
     .skip(skip)
     .limit(limit);

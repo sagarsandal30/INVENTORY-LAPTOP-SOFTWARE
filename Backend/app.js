@@ -16,6 +16,7 @@ const employeeRouter = require("./web-layer/routes/EmployeeRoutes");
 const assignmentRouter = require("./web-layer/routes/AssignmentRoutes");
 const dashboardRouter = require("./web-layer/routes/DashboardRoutes");
 const settingsRouter=require("./web-layer/routes/Setting");
+const notificationRouter=require("./web-layer/routes/NotificationRoutes");
 const app = express();
 
 // Middleware
@@ -33,6 +34,7 @@ app.use("/api",assignmentRouter);
 app.use("/api",dashboardRouter);
 app.use("/api/settings", settingsRouter);
 app.use("/api/queries", queryRoutes);
+app.use("/api/notifications",notificationRouter);
 
 // Start server
 const PORT = process.env.PORT || 5000;

@@ -1,5 +1,6 @@
 const Query = require("../models/Query");
 const User = require("../models/User");
+const Notification = require("../models/Notification");
 const {
   sendQueryNotificationEmail,
   sendQueryConfirmationEmail,
@@ -14,7 +15,7 @@ const createQuery = async (data,params) => {
   if(!user){
     const err = new Error("User not found.");
   }
-  console.log("the details",user)
+  
 const{queryType,subject,description,priority}=data;
 const id =user._id;
 const username = `${user.firstName} ${user.lastName}`;
@@ -42,6 +43,19 @@ console.log("after fetch data ",id,username,email)
     priority,
     status:        "Pending",
   });
+
+  await Notification.create({
+    title:`${subject}`,  
+    message:`${username} submitted a ${queryType}:${description}`,
+    type:priority==="High"?"Critical":"info",
+    category:"Query",
+    dept:user.department||"IT Ops",
+    read:false,
+    action:"View Details",
+     targetRole: "IT Operations",
+  relatedModel: "Query",
+   relatedId: query._id,
+  })
 
   // Fire-and-forget email notifications (don't await to keep response fast)
   sendQueryNotificationEmail(query).catch(() => {});
@@ -147,7 +161,9 @@ const updateQuery = async ({ queryId, updates }) => {
   const query = await Query.findByIdAndUpdate(
     queryId,
     { $set: sanitized },
-    { new: true, runValidators: true }
+    {  new: true,
+       runValidators: true 
+      }
   ).lean();
 
   if (!query) {
