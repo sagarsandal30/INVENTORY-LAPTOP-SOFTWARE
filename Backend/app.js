@@ -25,7 +25,13 @@ const initAiCron = require("./cron/aiCron");
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://your-vercel-url.vercel.app"
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
