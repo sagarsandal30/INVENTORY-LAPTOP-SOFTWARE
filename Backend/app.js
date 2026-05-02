@@ -28,7 +28,7 @@ const app = express();
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://your-vercel-url.vercel.app"
+    "inventory-laptop-software.vercel.app"
   ],
   credentials: true
 }));
