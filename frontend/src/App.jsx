@@ -5,15 +5,14 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Dashboard from "./pages/DashboardPage/DashBoard";
 import { Routes, Route } from "react-router-dom";
 import Login from "./components/Login/Login";
-import SignUp from "./components/signUp/SignUp";
 import LaptopModels from "./pages/LaptopModelsPage/Laptopmodels";
 import Software from "./pages/SoftwarePage/Software";
 import Notification from "./pages/NotificationPage/Notification";
 import Employees from "./pages/EmployeesPage/Employees";
 import Assignments from "./pages/AssignmentsPage/Assignments";
+import SignUp from "./components/signUp/SignUp.jsx"
 import Report from "./pages/ReportsPage/Report";
 import Settings from "./pages/SettingsPage/Settings";
-// import AddManager from "./pages/AdminAddManager/AddManager";
 import LaptopAssets from "./pages/PhysicalLaptop/LaptopAssets";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoutes";
 import EmployeeQueriesPage from "./pages/QueryPage/EmployeeQueryPage";
