@@ -1,6 +1,6 @@
 import Navbar from "../../components/navBar/NavBar";
 import Sidebar from "../../components/sideBar/SideBar";
-import "./Dashboard.css";
+import "./DashBoard.css";
 import {
   Laptop,
   Package,

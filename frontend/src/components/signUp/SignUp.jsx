@@ -13,7 +13,7 @@ import {
   Building2,
   ShieldCheck,
 } from "lucide-react";
-import "./Signup.css";
+import "./SignUp.css";
 
 
 const SignUp = () => {
