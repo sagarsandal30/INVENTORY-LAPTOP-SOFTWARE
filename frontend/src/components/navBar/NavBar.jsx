@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import "./Navbar.css";
 import { Bell, Mail, Globe, Settings as SettingsIcon,LogOut  } from "lucide-react";
-
+import {getAllNotifications} from "../../pages/NotificationPage/NotificationAPI"
+import { useEffect, useState } from "react";
 
 
 const handleLogout = () => {
@@ -11,6 +12,24 @@ const handleLogout = () => {
 };
 
 const Navbar = () => {
+    const user = JSON.parse(localStorage.getItem("User"));
+  const role = user?.role;
+  const[totalNotif,setTotalNotif]=useState(null);
+
+  const totalNotifications= async()=>{
+    try {
+      const data= await getAllNotifications();
+      console.log("Notifi",data.totalNotifications)
+      setTotalNotif(data.totalNotifications);
+    }
+    catch(error){
+      console.error("Error fetching total notifications:", error);
+    }
+  }
+useEffect(() => {
+  totalNotifications();
+}, []);
+
  const data=JSON.parse(localStorage.getItem("User"));
 
   return (
@@ -33,15 +52,18 @@ const Navbar = () => {
           <Globe size={20} />
         </button>
 
-        <Link to="/IT-Operation/notifications" className="icon-btn">
-          <button className="icon-btn">
-            <div className="notification-wrapper">
-              <Bell size={20} />
-              <span className="badge">3</span>
-            </div>
-          </button>
-        </Link>
+        {role !== "Employee" && (
+          <Link to="/IT-Operation/notifications" className="icon-btn" >
+            <button className="icon-btn">
+              <div className="notification-wrapper">
+                <Bell size={20} />
+                <span className="badge">{totalNotif || 0}</span>
+              </div>
+            </button>
+          </Link>
+        )}
 
+<Link to="/profileSettings">
         <div className="user-profile">
           <img
             src="https://ui-avatars.com/api/?name=Admin+User&background=6366f1&color=fff"
@@ -53,7 +75,8 @@ const Navbar = () => {
             <span className="user-role">{`${data.role}`}</span>
           </div>
         </div>
-        <Link to="/settings">
+        </Link>
+        <Link to="/profileSettings">
           {" "}
           <button className="nv-settings-btn">
             <SettingsIcon size={20} />

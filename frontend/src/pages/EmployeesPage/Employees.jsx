@@ -41,13 +41,26 @@ const INITIAL_EMPLOYEES = [
 ];
 
 const ROLES = ["Admin", "IT Operations", "Manager", "Employee"];
-const DEPARTMENTS = ["Engineering", "IT Operations", "HR", "Finance", "Design", "Marketing", "Sales", "Analytics", "QA"];
-const LOCATIONS = ["Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Pune", "Ahmedabad", "Kochi"];
+const DEPARTMENTS = [
+  "Engineering",
+  "IT Operations",
+  "Human Resources",
+  "Finance",
+  "Marketing",
+  "Sales",
+  "Design",
+  "Quality Assurance",
+  "Customer Support",
+  "Analytics",
+  "Legal",
+  "Administration",
+];
+const LOCATIONS = ["Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Pune", "Ahmedabad", "Kochi", "Not Assigned"];
 const STATUSES = ["All", "Active", "Inactive"];
 
 const EMPTY_FORM = {
   fullName: "", email: "", phoneNumber: "", role: "Employee", department: "", 
-  joinDate: "", location: "", status: "Active"
+  joinDate: new Date().toISOString().split('T')[0], location: "Not Assigned", status: "Active"
 };
 
 const initial_stats={
@@ -76,9 +89,8 @@ const Employees = () => {
 
 const fetchEmployees = async () => {
   try{
-    const data = await getEmployees(currentPage, 5, search, statusFilter);
+    const data = await getEmployees(currentPage, 10, search, statusFilter);
     console.log("Fetched Employees",data);
-    console.log(data.employees)
      setEmployees(data.employees);
      setStats(data.stats);
      setTotalPages(data.totalPages);
@@ -95,19 +107,6 @@ fetchEmployees();
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3200);
   };
-
-  // const filtered = useMemo(() => {
-  //   return employees.filter((emp) => {
-  //     const matchSearch =
-  //       emp.fullName.toLowerCase().includes(search.toLowerCase()) ||
-  //       emp.email.toLowe,search,statusFilterrC;ase().includes(search.toLowerCase()) ||
-  //       emp.department.toLowerCase().includes(search.toLowerCase());
-  //     const matchStatus = statusFilter === "All" || emp.status === statusFilter;
-  //     return matchSearch && matchStatus;
-  //   });
-  // }, [employees, search, statusFilter]);
-
-
 
   const handleSearch = (value) => {
     setSearch(value);
@@ -128,18 +127,17 @@ fetchEmployees();
 
   const validate = (f) => {
     const e = {};
-    if (!f.fullName.trim())
+    if (!f.fullName || !f.fullName.trim())
        e.fullName  = "Name is required";
-    if (!f.email.trim()) 
+    if (!f.email || !f.email.trim()) 
        e.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) 
       e.email = "Invalid email format";
+    
+    // department is now required to be consistent with User registration
     if (!f.department)
        e.department = "Department is required";
-    if (!f.joinDate)
-       e.joinDate = "Join date is required";
-    if (!f.location)
-       e.location = "Location is required";
+    
     return e;
   };
 
@@ -151,11 +149,13 @@ fetchEmployees();
   };
 
   const handleEdit = (item) => {
-  setEditItem(item);
-  setFormData({ ...item });
-  setFormErrors({});
-  setShowModal(true);
-};
+    setEditItem(item);
+    // Format date for the input type="date"
+    const formattedDate = item.joinDate ? new Date(item.joinDate).toISOString().split('T')[0] : "";
+    setFormData({ ...item, joinDate: formattedDate });
+    setFormErrors({});
+    setShowModal(true);
+  };
 
   const handleViewDetails = async(item) => {
    try {

@@ -1,29 +1,27 @@
-export const APIRoutes={
-    USER_REGISTER:"auth/register",
-    USER_LOGIN:"auth/login",
-    GOOGLE_USER:"auth/google",
-    USER_VERIFY:"auth/verify",
-    EMPLOYEE:"employee",
-   
-    
-   LAPTOPMODEL:"laptopsModels",
-   SINGLE_MODEL:"laptop",
-   SOFTWAREMODEL:"software",
-
-   CREATE_ASSIGNMENT:"assignment",
-    AVALIABLE_EMPLOYEE:"getAvaliableEmployees",
-
-    GET_ASSIGNMENTS:"getAllAssignments",
-    // GET_ASSIGNMENT_BY_ID:"getSingleAssignment",
-    // UPDATE_ASSIGNMENT_BY_ID:"updateAssignments",
-    RETURN_ASSIGNMENT:"returnAssignments",
-    DELETE_ASSIGNMENT:"deleteAssignment",
-
-    DASHBOARD:"dashboard",
-      SETTINGS:"settings/profile",
-
-//Queries
- QUERIES: "queries",
+export const APIRoutes = {
+  USER_REGISTER: "auth/register",
+  USER_LOGIN: "auth/login",
+  GOOGLE_USER: "auth/google",
+  USER_VERIFY: "auth/verify",
+  EMPLOYEE: "employee",
+  LAPTOPMODEL: "laptopsModels",
+  SINGLE_MODEL: "laptop",
+  SOFTWAREMODEL: "software",
+  CREATE_ASSIGNMENT: "assignment",
+  AVALIABLE_EMPLOYEE: "getAvaliableEmployees",
+  GET_ASSIGNMENTS: "getAllAssignments",
+  RETURN_ASSIGNMENT: "returnAssignments",
+  DELETE_ASSIGNMENT: "deleteAssignment",
+  DASHBOARD: "dashboard",
+  SETTINGS: "settings/profile",
+  QUERIES: "queries",
   MY_QUERIES: "queries/my",
   QUERY_STATS: "queries/stats",
-}
+  NOTIFICATIONS: "notifications",
+  AI_PREDICT: "ai/predict-failure",
+  AI_HIGH_RISK: "ai/high-risk-laptops",
+  AI_BRAND_ANALYSIS: "ai/brand-failure-analysis",
+  SOFTWARE_LICENSE: "software-licenses",
+  REPORTS: "reports",
+  SETTINGS_PASSWORD: "settings/password"
+};

@@ -117,6 +117,21 @@ export default function QueryForm({ onSuccess }) {
       </div>
 
       <div className="form-group full">
+        <label>Priority *</label>
+        <select
+          name="priority"
+          value={form.priority}
+          onChange={handleChange}
+          className="input"
+        >
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+          <option value="Critical">Critical</option>
+        </select>
+      </div>
+
+      <div className="form-group full">
         <label>Description *</label>
         <textarea
           name="description"

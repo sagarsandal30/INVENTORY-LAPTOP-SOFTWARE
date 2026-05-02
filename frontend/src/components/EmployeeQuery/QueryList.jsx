@@ -14,6 +14,7 @@ const PRIORITY_META = {
   Low: { className: "priority-badge low" },
   Medium: { className: "priority-badge medium" },
   High: { className: "priority-badge high" },
+  Critical: { className: "priority-badge critical" },
 };
 
 const StatusBadge = ({ status }) => {

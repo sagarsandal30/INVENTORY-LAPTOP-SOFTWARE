@@ -770,6 +770,29 @@ background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);  border-radius: 1
   white-space: nowrap;
 }
 
+.la-eol-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: #fff;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+  animation: pulse-gold 2s infinite;
+  margin-left: 4px;
+}
+
+@keyframes pulse-gold {
+  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+
 .la-date {
   font-size: 13px;
   color: var(--text-body);
@@ -1227,3 +1250,23 @@ input:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0px 1000px var(--white) inset;
   -webkit-text-fill-color: var(--text-dark);
 }
+
+/* ── AI Features ── */
+.spin {
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.la-detail-card--full {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.la-status-badge.critical { background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.la-status-badge.high { background-color: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
+.la-status-badge.medium { background-color: #fefce8; color: #ca8a04; border: 1px solid #fef08a; }
+.la-status-badge.low { background-color: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }

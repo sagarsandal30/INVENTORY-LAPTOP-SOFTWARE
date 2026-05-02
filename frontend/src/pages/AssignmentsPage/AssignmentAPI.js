@@ -172,3 +172,18 @@ export const getSoftware = async () => {
     throw error.response?.data || { message: "Getting All SoftwareModel failed" };
   }
 };
+
+// Get All Individual Software Licenses
+export const getIndividualSoftware = async () => {
+  try {
+    const result = await axios.get(
+      `${BASE_URL}${APIRoutes.SOFTWARE_LICENSE}`,
+      {
+        ...getConfig(),
+      }
+    );
+    return result.data;
+  } catch (error) {
+    throw error.response?.data || { message: "Getting Individual Software failed" };
+  }
+};

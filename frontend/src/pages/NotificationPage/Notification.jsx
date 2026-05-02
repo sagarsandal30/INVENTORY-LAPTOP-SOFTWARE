@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState,useEffect } from "react";
 import NavBar from "../../components/navBar/NavBar";
 import SideBar from "../../components/sideBar/SideBar";
 import {
@@ -28,9 +28,10 @@ import {
   Key,
   Zap,
   Calendar,
+  ChevronLeft,
 } from "lucide-react";
 import "./Notification.css";
-
+ import {getAllNotifications,deleteNotification,markAllReadAPI,markReadAPI,deleteAllNotif} from "./NotificationAPI";
 /* ─────────────────────────────────────────
    NAVIGATION
 ───────────────────────────────────────── */
@@ -48,150 +49,150 @@ import "./Notification.css";
    NOTIFICATION DATA
 ───────────────────────────────────────── */
 const INITIAL_NOTIFS = [
-  {
-    id: 1,
-    type: "critical",
-    category: "Software",
-    title: "License Expired — AutoCAD 2024",
-    message:
-      "AutoCAD 2024 license has expired for 15 seats in the Engineering department. Immediate renewal required to restore access for your team.",
-    time: "2 min ago",
-    read: false,
-    action: "Renew Now",
-    dept: "Engineering",
-  },
-  {
-    id: 2,
-    type: "critical",
-    category: "Laptop",
-    title: "MacBook Pro End-of-Life Alert",
-    message:
-      "14 MacBook Pro units assigned to the Finance team have reached their 3-year lifecycle end date. Schedule replacement laptops to maintain productivity.",
-    time: "1 hr ago",
-    read: false,
-    action: "Schedule Replacement",
-    dept: "Finance",
-  },
-  {
-    id: 3,
-    type: "warning",
-    category: "Software",
-    title: "Adobe Creative Suite Expiring in 28 Days",
-    message:
-      "Adobe Creative Suite license for 50 seats expires on 15 Mar 2025. Start the renewal process to avoid service interruption for the Design team.",
-    time: "18 min ago",
-    read: false,
-    action: "View License",
-    dept: "Design",
-  },
-  {
-    id: 4,
-    type: "warning",
-    category: "Laptop",
-    title: "Dell Latitude 5420 — Low Inventory",
-    message:
-      "Dell Latitude 5420 stock is critically low — only 3 units remaining against a minimum threshold of 10 units. Place a reorder immediately.",
-    time: "3 hrs ago",
-    read: false,
-    action: "Reorder Now",
-    dept: "IT Ops",
-  },
-  {
-    id: 5,
-    type: "info",
-    category: "Assignment",
-    title: "Dell XPS 15 Assigned to John Smith",
-    message:
-      "Dell XPS 15 (SN: DX15-2024-0891) successfully assigned to John Smith in Engineering. Asset status updated to In Use.",
-    time: "2 hrs ago",
-    read: false,
-    action: "View Assignment",
-    dept: "Engineering",
-  },
-  {
-    id: 6,
-    type: "success",
-    category: "Software",
-    title: "Microsoft Office 365 Renewed Successfully",
-    message:
-      "Microsoft Office 365 (300 seats, Enterprise Plan) has been successfully renewed. Next renewal date: Dec 31, 2026. No further action required.",
-    time: "5 hrs ago",
-    read: true,
-    action: "View Details",
-    dept: "All",
-  },
-  {
-    id: 7,
-    type: "warning",
-    category: "Software",
-    title: "GitHub Enterprise at 96% Capacity",
-    message:
-      "GitHub Enterprise is at 96% capacity (115/120 seats). Consider purchasing additional seats to avoid blocking new developer onboarding.",
-    time: "1 day ago",
-    read: true,
-    action: "Add Seats",
-    dept: "Engineering",
-  },
-  {
-    id: 8,
-    type: "info",
-    category: "System",
-    title: "Annual Growth Forecast Recalculated",
-    message:
-      "Projected laptop requirement for FY2026: 1,050 units (+5% YoY). Software license demand also increased across 3 productivity categories.",
-    time: "1 day ago",
-    read: true,
-    action: "View Forecast",
-    dept: "Management",
-  },
-  {
-    id: 9,
-    type: "success",
-    category: "Laptop",
-    title: "20 HP EliteBook 840 G11 Units Added",
-    message:
-      "20 new HP EliteBook 840 G11 units added to inventory. All units are available for immediate assignment to employees.",
-    time: "2 days ago",
-    read: true,
-    action: "View Inventory",
-    dept: "IT Ops",
-  },
-  {
-    id: 10,
-    type: "info",
-    category: "Assignment",
-    title: "MacBook Pro 16″ Returned by Mike Davis",
-    message:
-      'MacBook Pro 16" (SN: MBP-2021-0342) returned by Mike Davis. Asset status updated to Available for reassignment.',
-    time: "2 days ago",
-    read: true,
-    action: "View Asset",
-    dept: "Design",
-  },
-  {
-    id: 11,
-    type: "warning",
-    category: "Software",
-    title: "Tableau Desktop Renewal in 60 Days",
-    message:
-      "Tableau Desktop license (25 seats) for the Analytics team is due for renewal on Nov 10, 2025. Set a reminder or start renewal now.",
-    time: "3 days ago",
-    read: true,
-    action: "Set Reminder",
-    dept: "Analytics",
-  },
-  {
-    id: 12,
-    type: "info",
-    category: "System",
-    title: "New Employee Onboarded — Sarah Johnson",
-    message:
-      "Sarah Johnson has been added to the system under the Design department. Assets pending assignment: 1× Laptop + Adobe Creative Suite license.",
-    time: "3 days ago",
-    read: true,
-    action: "Assign Assets",
-    dept: "Design",
-  },
+  // {
+  //   id: 1,
+  //   type: "critical",
+  //   category: "Software",
+  //   title: "License Expired — AutoCAD 2024",
+  //   message:
+  //     "AutoCAD 2024 license has expired for 15 seats in the Engineering department. Immediate renewal required to restore access for your team.",
+  //   time: "2 min ago",
+  //   read: false,
+  //   action: "Renew Now",
+  //   dept: "Engineering",
+  // },
+  // {
+  //   id: 2,
+  //   type: "critical",
+  //   category: "Laptop",
+  //   title: "MacBook Pro End-of-Life Alert",
+  //   message:
+  //     "14 MacBook Pro units assigned to the Finance team have reached their 3-year lifecycle end date. Schedule replacement laptops to maintain productivity.",
+  //   time: "1 hr ago",
+  //   read: false,
+  //   action: "Schedule Replacement",
+  //   dept: "Finance",
+  // },
+  // {
+  //   id: 3,
+  //   type: "warning",
+  //   category: "Software",
+  //   title: "Adobe Creative Suite Expiring in 28 Days",
+  //   message:
+  //     "Adobe Creative Suite license for 50 seats expires on 15 Mar 2025. Start the renewal process to avoid service interruption for the Design team.",
+  //   time: "18 min ago",
+  //   read: false,
+  //   action: "View License",
+  //   dept: "Design",
+  // },
+  // {
+  //   id: 4,
+  //   type: "warning",
+  //   category: "Laptop",
+  //   title: "Dell Latitude 5420 — Low Inventory",
+  //   message:
+  //     "Dell Latitude 5420 stock is critically low — only 3 units remaining against a minimum threshold of 10 units. Place a reorder immediately.",
+  //   time: "3 hrs ago",
+  //   read: false,
+  //   action: "Reorder Now",
+  //   dept: "IT Ops",
+  // },
+  // {
+  //   id: 5,
+  //   type: "info",
+  //   category: "Assignment",
+  //   title: "Dell XPS 15 Assigned to John Smith",
+  //   message:
+  //     "Dell XPS 15 (SN: DX15-2024-0891) successfully assigned to John Smith in Engineering. Asset status updated to In Use.",
+  //   time: "2 hrs ago",
+  //   read: false,
+  //   action: "View Assignment",
+  //   dept: "Engineering",
+  // },
+  // {
+  //   id: 6,
+  //   type: "success",
+  //   category: "Software",
+  //   title: "Microsoft Office 365 Renewed Successfully",
+  //   message:
+  //     "Microsoft Office 365 (300 seats, Enterprise Plan) has been successfully renewed. Next renewal date: Dec 31, 2026. No further action required.",
+  //   time: "5 hrs ago",
+  //   read: true,
+  //   action: "View Details",
+  //   dept: "All",
+  // },
+  // {
+  //   id: 7,
+  //   type: "warning",
+  //   category: "Software",
+  //   title: "GitHub Enterprise at 96% Capacity",
+  //   message:
+  //     "GitHub Enterprise is at 96% capacity (115/120 seats). Consider purchasing additional seats to avoid blocking new developer onboarding.",
+  //   time: "1 day ago",
+  //   read: true,
+  //   action: "Add Seats",
+  //   dept: "Engineering",
+  // },
+  // {
+  //   id: 8,
+  //   type: "info",
+  //   category: "System",
+  //   title: "Annual Growth Forecast Recalculated",
+  //   message:
+  //     "Projected laptop requirement for FY2026: 1,050 units (+5% YoY). Software license demand also increased across 3 productivity categories.",
+  //   time: "1 day ago",
+  //   read: true,
+  //   action: "View Forecast",
+  //   dept: "Management",
+  // },
+  // {
+  //   id: 9,
+  //   type: "success",
+  //   category: "Laptop",
+  //   title: "20 HP EliteBook 840 G11 Units Added",
+  //   message:
+  //     "20 new HP EliteBook 840 G11 units added to inventory. All units are available for immediate assignment to employees.",
+  //   time: "2 days ago",
+  //   read: true,
+  //   action: "View Inventory",
+  //   dept: "IT Ops",
+  // },
+  // {
+  //   id: 10,
+  //   type: "info",
+  //   category: "Assignment",
+  //   title: "MacBook Pro 16″ Returned by Mike Davis",
+  //   message:
+  //     'MacBook Pro 16" (SN: MBP-2021-0342) returned by Mike Davis. Asset status updated to Available for reassignment.',
+  //   time: "2 days ago",
+  //   read: true,
+  //   action: "View Asset",
+  //   dept: "Design",
+  // },
+  // {
+  //   id: 11,
+  //   type: "warning",
+  //   category: "Software",
+  //   title: "Tableau Desktop Renewal in 60 Days",
+  //   message:
+  //     "Tableau Desktop license (25 seats) for the Analytics team is due for renewal on Nov 10, 2025. Set a reminder or start renewal now.",
+  //   time: "3 days ago",
+  //   read: true,
+  //   action: "Set Reminder",
+  //   dept: "Analytics",
+  // },
+  // {
+  //   id: 12,
+  //   type: "info",
+  //   category: "System",
+  //   title: "New Employee Onboarded — Sarah Johnson",
+  //   message:
+  //     "Sarah Johnson has been added to the system under the Design department. Assets pending assignment: 1× Laptop + Adobe Creative Suite license.",
+  //   time: "3 days ago",
+  //   read: true,
+  //   action: "Assign Assets",
+  //   dept: "Design",
+  // },
 ];
 
 /* ─────────────────────────────────────────
@@ -232,73 +233,9 @@ const TYPE_CONFIG = {
   },
 };
 
-/* ─────────────────────────────────────────
-   SETTINGS DATA
-───────────────────────────────────────── */
-const SETTINGS_DATA = [
-  {
-    key: "email",
-    label: "Email Alerts",
-    desc: "Receive notifications via email",
-    on: true,
-  },
-  {
-    key: "inapp",
-    label: "In-App Alerts",
-    desc: "Show alerts inside the dashboard",
-    on: true,
-  },
-  {
-    key: "critical",
-    label: "Critical Alerts",
-    desc: "License expirations & EOL warnings",
-    on: true,
-  },
-  {
-    key: "exp30",
-    label: "30-Day Software Expiry",
-    desc: "Alert 30 days before license renewal",
-    on: true,
-  },
-  {
-    key: "exp60",
-    label: "60-Day Software Expiry",
-    desc: "Alert 60 days before license renewal",
-    on: true,
-  },
-  {
-    key: "exp90",
-    label: "90-Day Software Expiry",
-    desc: "Alert 90 days before license renewal",
-    on: false,
-  },
-  {
-    key: "eol",
-    label: "Laptop End-of-Life",
-    desc: "Alert when laptops reach 3-year lifecycle",
-    on: true,
-  },
-  {
-    key: "lowinv",
-    label: "Low Inventory Alerts",
-    desc: "Alert when stock falls below minimum",
-    on: true,
-  },
-  {
-    key: "assign",
-    label: "Assignment Updates",
-    desc: "Notify on asset assignments & returns",
-    on: false,
-  },
-  {
-    key: "system",
-    label: "System & Forecast Updates",
-    desc: "Growth forecasts and system events",
-    on: true,
-  },
-];
 
-const CATEGORIES = ["All", "Software", "Laptop", "Assignment", "System"];
+
+const CATEGORIES = ["All", "Software", "Laptop", "Assignment", "System","Query"];
 const FILTERS = ["All", "Unread", "Critical", "Warning", "Info", "Success"];
 
 /* ════════════════════════════════════════════
@@ -306,63 +243,95 @@ const FILTERS = ["All", "Unread", "Critical", "Warning", "Info", "Success"];
 ════════════════════════════════════════════ */
 const Notification = () => {
   const [notifs, setNotifs] = useState(INITIAL_NOTIFS);
-  // const [activePage,   setActivePage]   = useState('notifications');
   const [activeFilter, setActiveFilter] = useState("All");
   const [activeCat, setActiveCat] = useState("All");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const [settings, setSettings] = useState(
-    Object.fromEntries(SETTINGS_DATA.map((s) => [s.key, s.on])),
-  );
+  const [currentPage,setCurrentPage]=useState(1);
+  const [totalPages,setTotalPages]=useState(1);
+  const [toast,setToast]=useState(null);
+  const[unread,setUnRead]=useState([]);
+
+
+// GET ALL NOTIFICATIONS
+const fetchAllNotifications= async()=>{
+  try {
+    const response= await getAllNotifications(currentPage,10,search,activeCat,activeFilter);
+    console.log(response);
+    setNotifs(response.allNotifications);
+    setUnRead(response.UnreadNotify);
+    setTotalPages(response.totalPages);
+  
+}catch(error){
+  console.error("Error fetching notifications:",error);
+}
+}
+useEffect(()=>{
+  const loadNotifications = async () => {
+    await fetchAllNotifications();
+  };
+
+  loadNotifications();
+
+},[currentPage,search,activeCat,activeFilter])
+
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3200);
+  };
+
+const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
 
   /* ── Derived ── */
   const unreadCount = notifs.filter((n) => !n.read).length;
   const criticalCount = notifs.filter(
-    (n) => n.type === "critical" && !n.read,
+    (n) => n.type?.toLowerCase() === "critical" && !n.read,
   ).length;
 
-  /* ── Filtered list ── */
-  const filtered = useMemo(() => {
-    return notifs.filter((n) => {
-      const haystack = (n.title + " " + n.message).toLowerCase();
-      if (search && !haystack.includes(search.toLowerCase())) return false;
-      if (activeFilter === "Unread" && n.read) return false;
-      if (activeFilter === "Critical" && n.type !== "critical") return false;
-      if (activeFilter === "Warning" && n.type !== "warning") return false;
-      if (activeFilter === "Info" && n.type !== "info") return false;
-      if (activeFilter === "Success" && n.type !== "success") return false;
-      if (activeCat !== "All" && n.category !== activeCat) return false;
-      return true;
-    });
-  }, [notifs, activeFilter, activeCat, search]);
-
   /* ── Actions ── */
-  const markRead = (id) =>
-    setNotifs((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
+  //Function for Mark Single Read true
+  const markRead = async(id) =>{
+ const data= await markReadAPI(id);
+setNotifs((prev) =>
+      prev.map((n) => (n._id === id ? data.updated : n)),
     );
-
-  const markAllRead = () =>
+  }
+  
+//Function for Mark All Read
+  const markAllRead = async() =>{
+       await markAllReadAPI();
     setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+  }
+ 
 
-  const deleteNotif = (id) => {
-    setNotifs((prev) => prev.filter((n) => n.id !== id));
-    if (selected?.id === id) setSelected(null);
+  const deleteNotif = async(id) => {
+    await deleteNotification(id);
+    setNotifs((prev) => prev.filter((n) => n._id !== id));
+    if (selected?._id === id)
+       setSelected(null);
   };
 
-  const clearAll = () => {
+  const clearAll = async() => {
+   await deleteAllNotif();
     setNotifs([]);
     setSelected(null);
+    showToast("All Notifications Deleted");
+
   };
 
   const openDetail = (n) => {
     setSelected(n);
-    if (!n.read) markRead(n.id);
+  
+    if (n.read===false){
+        markRead(n._id);
+    }
+    
   };
 
-  const toggleSetting = (key) =>
-    setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
 
   /* ════════════════ RENDER ════════════════ */
   return (
@@ -407,13 +376,7 @@ const Notification = () => {
                   Mark all read
                 </button>
               )}
-              <button
-                className={`nf-btn nf-btn--outline ${showSettings ? "nf-btn--outline-active" : ""}`}
-                onClick={() => setShowSettings((p) => !p)}
-              >
-                <Settings size={15} />
-                Settings
-              </button>
+            
               {notifs.length > 0 && (
                 <button className="nf-btn nf-btn--danger" onClick={clearAll}>
                   <Trash2 size={15} />
@@ -423,43 +386,11 @@ const Notification = () => {
             </div>
           </div>
 
-          {/* ── Settings Panel ── */}
-          {showSettings && (
-            <div className="nf-settings-panel">
-              <div className="nf-settings-hdr">
-                <span className="nf-settings-title">
-                  <Settings size={15} /> Notification Preferences
-                </span>
-                <button
-                  className="nf-settings-close"
-                  onClick={() => setShowSettings(false)}
-                >
-                  <X size={16} />
-                </button>
-              </div>
-              <div className="nf-settings-grid">
-                {SETTINGS_DATA.map((s) => (
-                  <div className="nf-setting-row" key={s.key}>
-                    <div className="nf-setting-text">
-                      <span className="nf-setting-label">{s.label}</span>
-                      <span className="nf-setting-desc">{s.desc}</span>
-                    </div>
-                    <button
-                      className={`nf-toggle ${settings[s.key] ? "nf-toggle--on" : ""}`}
-                      onClick={() => toggleSetting(s.key)}
-                    >
-                      <span className="nf-toggle-knob" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
+          
           {/* ── Summary Pills ── */}
           <div className="nf-summary-row">
             {Object.entries(TYPE_CONFIG).map(([type, cfg]) => {
-              const count = notifs.filter((n) => n.type === type).length;
+              const count = notifs.filter((n) => n.type?.toLowerCase() === type).length;
               const active = activeFilter === cfg.label;
               return (
                 <button
@@ -519,7 +450,7 @@ const Notification = () => {
                     <button
                       key={f}
                       className={`nf-filter-tab ${activeFilter === f ? "nf-filter-tab--active" : ""}`}
-                      onClick={() => setActiveFilter(f)}
+                       onClick={() => setActiveFilter(f)}
                     >
                       {f}
                       {f === "Unread" && unreadCount > 0 && (
@@ -541,30 +472,30 @@ const Notification = () => {
                     </button>
                   ))}
                   <span className="nf-result-count">
-                    {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+                    {notifs.length} result{notifs.length !== 1 ? "s" : ""}
                   </span>
                 </div>
               </div>
 
               {/* Notification list */}
               <div className="nf-list">
-                {filtered.length === 0 ? (
+                {notifs.length === 0 ? (
                   <div className="nf-empty">
                     <BellOff size={46} strokeWidth={1.2} />
-                    <p>No notifications found</p>
+                    <p>No notifications found </p>
                     <span>Try adjusting your search or filters</span>
                   </div>
                 ) : (
-                  filtered.map((n, idx) => {
-                    const cfg = TYPE_CONFIG[n.type];
+                  notifs.map((n, idx) => {
+                    const cfg = TYPE_CONFIG[n.type?.toLowerCase()]|| TYPE_CONFIG.info;
                     const NIcon = cfg.Icon;
                     return (
                       <div
-                        key={n.id}
+                        key={n._id}
                         className={[
                           "nf-item",
                           !n.read ? "nf-item--unread" : "",
-                          selected?.id === n.id ? "nf-item--selected" : "",
+                          selected?._id === n._id ? "nf-item--selected" : "",
                         ].join(" ")}
                         style={{ animationDelay: `${idx * 0.04}s` }}
                         onClick={() => openDetail(n)}
@@ -589,7 +520,8 @@ const Notification = () => {
                         <div className="nf-item-content">
                           <div className="nf-item-top">
                             <span className="nf-item-title">{n.title}</span>
-                            <span className="nf-item-time">{n.time}</span>
+                            <span className="nf-item-time">{new Date(n.time).toLocaleString()}
+</span>
                           </div>
                           <p className="nf-item-msg">{n.message}</p>
                           <div className="nf-item-meta">
@@ -613,7 +545,7 @@ const Notification = () => {
                           title="Remove"
                           onClick={(e) => {
                             e.stopPropagation();
-                            deleteNotif(n.id);
+                            deleteNotif(n._id);
                           }}
                         >
                           <X size={13} />
@@ -625,10 +557,38 @@ const Notification = () => {
               </div>
             </div>
 
+{/* pagination */}
+{notifs.length > 0 && (
+          <div className="emp-pagination">
+            <p className="emp-pagination-info">
+            </p>
+            <div className="emp-pagination-buttons">
+              <button
+                className="emp-btn-page emp-btn-page-nav"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft size={16} />
+                Previous
+              </button>
+              
+              <button
+                className="emp-btn-page emp-btn-page-nav"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+
+
             {/* ────── Detail Panel ────── */}
             {selected &&
               (() => {
-                const cfg = TYPE_CONFIG[selected.type];
+                const cfg = TYPE_CONFIG[selected.type?.toLowerCase()] || TYPE_CONFIG.info;
                 const DIcon = cfg.Icon;
                 return (
                   <div className="nf-detail-panel">
@@ -690,7 +650,9 @@ const Notification = () => {
                         </div>
                         <div className="nf-detail-cell">
                           <span className="nf-meta-label">Received</span>
-                          <span className="nf-meta-value">{selected.time}</span>
+               
+
+                          <span className="nf-meta-value">{new Date(selected.time).toLocaleString()}</span>
                         </div>
                         <div className="nf-detail-cell">
                           <span className="nf-meta-label">Status</span>
@@ -708,7 +670,7 @@ const Notification = () => {
                         </button>
                         <button
                           className="nf-btn nf-btn--danger nf-btn--full"
-                          onClick={() => deleteNotif(selected.id)}
+                          onClick={() => deleteNotif(selected._id)}
                         >
                           <Trash2 size={14} />
                           Remove Notification

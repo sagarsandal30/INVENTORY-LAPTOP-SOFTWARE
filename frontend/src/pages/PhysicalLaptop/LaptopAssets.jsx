@@ -30,6 +30,8 @@ import {
   User,
    ChevronLeft,
   ChevronRight,
+  BrainCircuit,
+  Zap,
 } from "lucide-react";
 
 import "./LaptopAssets.css";
@@ -42,8 +44,10 @@ import {
   getLaptopAssetById,
   deleteLaptopAssetById,
   updateLaptopAssetById,
-  getLaptopModels
+  getLaptopModels,
+  getEmployees,
 } from "./LaptopAssetsAPI";
+import { predictFailure } from "../../API/aiApi";
 
 
 const NAV_ITEMS = [
@@ -56,7 +60,7 @@ const NAV_ITEMS = [
   { icon: Bell, label: "Notifications", id: "notifications" },
 ];
 
-const STATUSES = ["All", "Avaliable", "Assigned", "Under Repair","Retired"];
+const STATUSES = ["All", "Available", "Assigned", "Under Repair","Retired"];
 const CONDITIONS = ["All", "Good", "Damaged", "Needs Repair"];
 
 const EMPTY_FORM = {
@@ -89,6 +93,7 @@ export default function LaptopAssets() {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [formErrors, setFormErrors] = useState({});
   const [toast, setToast] = useState(null);
+  const [aiPredicting, setAiPredicting] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [stats,setStats]=useState([]);
@@ -124,6 +129,7 @@ export default function LaptopAssets() {
       console.log(data)
       setAssets(data.existingLaptopAssets || []);
       setTotalPages(data.totalPages);
+      setStats(data.stats || {});
     } catch (error) {
       console.error(error);
     }
@@ -132,23 +138,28 @@ export default function LaptopAssets() {
     fetchLaptopAssets();
   }, [currentPage, modelId,search,statusFilter,conditionFilter]);
 
-  const fetchLaptopModels = async()=>{
-    try{
-      const response = await getLaptopModels(1,5);
-      console.log("hello");
-      console.log(response.existingLaptop);
-      setLaptopModels(response.existingLaptop);
-      
-      console.log(laptopModels);
-    } catch(error){
-      console.error(error)
+  const fetchLaptopModels = async () => {
+    try {
+      const response = await getLaptopModels(1, 100); // Increased limit to see more models in dropdown
+      setLaptopModels(response.existingLaptop || []);
+    } catch (error) {
+      console.error(error);
     }
-  }
-    
- 
-  useEffect(()=>{
+  };
+
+  const fetchEmployees = async () => {
+    try {
+      const data = await getEmployees();
+      setEmployees(data?.data || []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
     fetchLaptopModels();
-  },[])
+    fetchEmployees();
+  }, []);
 
 
   /* ── Actions ── */
@@ -192,7 +203,7 @@ export default function LaptopAssets() {
         console.log("Updated Asset", data);
         setAssets((prev) =>
           prev.map((asset) =>
-            asset._id === editItem._id ? data.updated : asset,
+            asset._id === editItem._id ? data.updateLaptop : asset,
           ),
         );
         showToast("Laptop asset updated successfully", "success");
@@ -247,6 +258,19 @@ const getModelName = (laptopModelId) => {
         console.log(error)
   };
   }
+
+  const handlePredict = async (assetId) => {
+    setAiPredicting(assetId);
+    try {
+      const res = await predictFailure(assetId);
+      showToast(`Prediction Score: ${res.data.predictionScore}% - Risk: ${res.data.riskLevel}`, "success");
+      fetchLaptopAssets(); // Refresh to get updated metrics
+    } catch (error) {
+      showToast(error.message || "AI Prediction failed", "error");
+    } finally {
+      setAiPredicting(null);
+    }
+  };
   const handleFormChange = (e) => {
     const { name, value } = e.target;
 
@@ -266,12 +290,18 @@ const getModelName = (laptopModelId) => {
 
   /* ── Get employee name ── */
   const getEmployeeName = (assignedTo) => {
-    if (!assignedTo) 
-      return "Unassigned";
+    if (!assignedTo) return "Unassigned";
+
+    // If assignedTo is already populated (object)
+    if (typeof assignedTo === "object" && assignedTo.fullName) {
+      return assignedTo.fullName;
+    }
+
+    // Lookup in employees list
     const employee = employees.find(
-      (e) => e._id === assignedTo._id || e._id === assignedTo,
+      (e) => e._id === (assignedTo._id || assignedTo),
     );
-    return employee ? employee.name : "Unknown Employee";
+    return employee ? employee.fullName : "Unknown Employee";
   };
 
  
@@ -373,15 +403,15 @@ const getModelName = (laptopModelId) => {
                 <div
                   className="la-stat-icon"
                   style={{
-                    background: "rgba(16,185,129,0.12)",
-                    color: "#10B981",
+                    background: "rgba(107,114,128,0.12)",
+                    color: "#6B7280",
                   }}
                 >
-                  <CheckCircle size={20} />
+                  <RefreshCw size={20} />
                 </div>
                 <div>
-                  <div className="la-stat-value">{stats.good}</div>
-                  <div className="la-stat-label">Good Condition</div>
+                  <div className="la-stat-value">{stats.retired || 0}</div>
+                  <div className="la-stat-label">Retired</div>
                 </div>
               </div>
               <div className="la-stat-card">
@@ -487,6 +517,11 @@ const getModelName = (laptopModelId) => {
                           <div className="la-model-cell">
                             <Monitor size={16} />
                             <span>{(a.modelName)}</span>
+                            {a.isNearEOL && (
+                              <span className="la-eol-badge" title="Nearing 3-year end of life">
+                                <Zap size={10} /> EOL
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td>
@@ -494,25 +529,32 @@ const getModelName = (laptopModelId) => {
                             className="la-status-badge"
                             style={{
                               background:
-                                a.status === "Avaliable"
+                                a.status === "Available" || a.status === "Available"
                                   ? "rgba(16,185,129,0.12)"
                                   : a.status === "Assigned"
                                     ? "rgba(99,102,241,0.12)"
-                                    : "rgba(245,158,11,0.12)",
+                                    : a.status === "Retired"
+                                      ? "rgba(107,114,128,0.12)"
+                                      : "rgba(245,158,11,0.12)",
                               color:
-                                a.status === "Avaliable"
+                                a.status === "Available" || a.status === "Available"
                                   ? "#10B981"
                                   : a.status === "Assigned"
                                     ? "#6366F1"
-                                    : "#F59E0B",
+                                    : a.status === "Retired"
+                                      ? "#6B7280"
+                                      : "#F59E0B",
                             }}
                           >
-                            {a.status === "Avaliable" && (
+                            {(a.status === "Available" || a.status === "Avaliable") && (
                               <CheckCircle size={12} />
                             )}
                             {a.status === "Assigned" && <Users size={12} />}
                             {a.status === "Under Repair" && (
                               <Wrench size={12} />
+                            )}
+                            {a.status === "Retired" && (
+                              <RefreshCw size={12} />
                             )}
                             {a.status}
                           </span>
@@ -552,6 +594,19 @@ const getModelName = (laptopModelId) => {
                         </td>
                         <td>
                           <div className="la-actions">
+                            <button
+                              className="la-action-btn la-action-btn--view"
+                              style={{ color: "#6366F1" }}
+                              title="Predict Failure"
+                              onClick={() => handlePredict(a._id)}
+                              disabled={aiPredicting === a._id}
+                            >
+                              {aiPredicting === a._id ? (
+                                <RefreshCw size={15} className="spin" />
+                              ) : (
+                                <BrainCircuit size={15} />
+                              )}
+                            </button>
                             <button
                               className="la-action-btn la-action-btn--view"
                               title="View"
@@ -694,7 +749,7 @@ const getModelName = (laptopModelId) => {
                         onChange={handleFormChange}
                         className="la-input"
                       >
-                        <option>Avaliable</option>
+                        <option>Available</option>
                         <option>Assigned</option>
                         <option>Under Repair</option>
                         <option>Retired</option>
@@ -731,7 +786,7 @@ const getModelName = (laptopModelId) => {
                         <option value="">Select Employee</option>
                         {employees.map((emp) => (
                           <option key={emp._id} value={emp._id}>
-                            {emp.name}
+                            {emp.fullName}
                           </option>
                         ))}
                       </select>
@@ -866,6 +921,40 @@ const getModelName = (laptopModelId) => {
                         : "N/A"}
                     </span>
                   </div>
+                  {showDetail.aiMetrics && (
+                    <div className="la-detail-card la-detail-card--full" style={{ gridColumn: "span 2", background: "#f8fafc", border: "1px solid #e2e8f0", padding: "15px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px", color: "#6366F1" }}>
+                        <BrainCircuit size={18} />
+                        <span style={{ fontWeight: "700" }}>AI Failure Risk Analysis</span>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
+                        <div>
+                          <label className="la-detail-label">Prediction Score</label>
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            <div style={{ flex: 1, height: "8px", background: "#e2e8f0", borderRadius: "4px" }}>
+                              <div style={{ height: "100%", width: `${showDetail.aiMetrics.predictionScore}%`, background: showDetail.aiMetrics.predictionScore > 70 ? "#ef4444" : "#f59e0b", borderRadius: "4px" }}></div>
+                            </div>
+                            <span className="la-detail-value">{showDetail.aiMetrics.predictionScore}%</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="la-detail-label">Risk Level</label>
+                          <span className={`la-status-badge ${showDetail.aiMetrics.riskLevel.toLowerCase()}`} style={{ 
+                            background: showDetail.aiMetrics.riskLevel === "Critical" ? "#fef2f2" : "#fff7ed",
+                            color: showDetail.aiMetrics.riskLevel === "Critical" ? "#dc2626" : "#ea580c"
+                          }}>
+                            {showDetail.aiMetrics.riskLevel}
+                          </span>
+                        </div>
+                        <div style={{ gridColumn: "span 2" }}>
+                          <label className="la-detail-label">AI Recommendation</label>
+                          <p style={{ margin: "5px 0 0 0", fontSize: "13px", color: "#475569", fontStyle: "italic" }}>
+                            "{showDetail.aiMetrics.aiRecommendation}"
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="la-modal-footer">

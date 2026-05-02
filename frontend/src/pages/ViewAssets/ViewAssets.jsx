@@ -1,37 +1,35 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "./ViewAssets.css";
-import { Laptop, Package, Monitor, Calendar, Shield } from "lucide-react";
+import { Laptop, Package, Monitor, Calendar, Shield, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import Sidebar from "../../components/sideBar/SideBar";
 import Navbar from "../../components/navBar/NavBar";
+import { fetchMyAssets } from "./ViewAssetsAPI";
 
 export default function ViewAssets() {
-  // Dummy data for now
-  const assignedAssets = [
-    {
-      id: 1,
-      assetType: "Laptop",
-      assetName: "Dell Latitude 5420",
-      serialNumber: "DL-5420-001",
-      assignedDate: "2026-04-10",
-      status: "Assigned",
-    },
-    {
-      id: 2,
-      assetType: "Software",
-      assetName: "Microsoft Office 365",
-      serialNumber: "LIC-OFC-221",
-      assignedDate: "2026-03-22",
-      status: "Active",
-    },
-    {
-      id: 3,
-      assetType: "Software",
-      assetName: "Slack Premium",
-      serialNumber: "LIC-SLK-118",
-      assignedDate: "2026-02-14",
-      status: "Active",
-    },
-  ];
+  const [assignedAssets, setAssignedAssets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const loadAssets = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetchMyAssets();
+      if (res.success) {
+        setAssignedAssets(res.data);
+      } else {
+        setError(res.message);
+      }
+    } catch (err) {
+      setError(err.message || "Could not load your assets. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAssets();
+  }, []);
 
   return (
     <>
@@ -39,11 +37,22 @@ export default function ViewAssets() {
     <Sidebar />
     <div className="view-assets-page">
       <div className="view-assets-header">
-        <div>
+        <div className="view-assets-header-left">
           <h1>My Assigned Assets</h1>
           <p>View all laptops and software currently assigned to you</p>
         </div>
+        <button className="va-refresh-btn" onClick={loadAssets} disabled={loading}>
+          <RefreshCw size={18} className={loading ? "spin" : ""} />
+          Refresh
+        </button>
       </div>
+
+      {error && (
+        <div className="va-error-alert">
+          <AlertCircle size={20} />
+          <span>{error}</span>
+        </div>
+      )}
 
       <div className="assets-container">
         <div className="assets-topbar">
@@ -52,11 +61,16 @@ export default function ViewAssets() {
           </div>
         </div>
 
-        {assignedAssets.length === 0 ? (
+        {loading ? (
+          <div className="va-loader">
+            <Loader2 size={40} className="spin" />
+            <p>Fetching your assets...</p>
+          </div>
+        ) : assignedAssets.length === 0 ? (
           <div className="empty-state">
             <Package size={42} />
             <h3>No Assets Assigned</h3>
-            <p>You currently do not have any assets assigned.</p>
+            <p>You currently do not have any assets assigned to your profile.</p>
           </div>
         ) : (
           <div className="assets-grid">
@@ -102,12 +116,16 @@ export default function ViewAssets() {
                   <p>
                     <Calendar size={16} />
                     <span>
-                      <strong>Assigned Date:</strong> {asset.assignedDate}
+                      <strong>Assigned Date:</strong> {new Date(asset.assignedDate).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric"
+                      })}
                     </span>
                   </p>
                 </div>
 
-                <button className="view-details-btn">View Details</button>
+                {/* <button className="view-details-btn">View Details</button> */}
               </div>
             ))}
           </div>

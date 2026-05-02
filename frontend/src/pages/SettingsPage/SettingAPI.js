@@ -31,7 +31,7 @@ export const updateProfileDetails = async (data) => {
 };
 export const updateProfilePassword = async (data) => {
   try {
-    const result = await axios.put(`${BASE_URL}${APIRoutes.USER_REGISTER}`, data, {
+    const result = await axios.put(`${BASE_URL}${APIRoutes.SETTINGS_PASSWORD}`, data, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

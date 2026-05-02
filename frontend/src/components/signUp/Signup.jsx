@@ -100,18 +100,15 @@ const SignUp = () => {
  
     // 🔥 backend call
     const data = await registerUser(formData);
-
     console.log("SUCCESS",data);
-
-    setSuccess(true); // success UI
+    setSuccess(true);
+    setLoading(true); // success UI
     navigate("/login"); // go to login page
 
   } catch (err) {
     
     console.log(err);
     setError("Registration failed",err);
-  }finally {
-    setLoading(false); // ✅ add this
   }
 
   };

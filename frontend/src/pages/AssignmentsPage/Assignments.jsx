@@ -8,6 +8,7 @@ import {
   getLaptopModels,
   getLaptopAssets,
   getSoftware,
+  getIndividualSoftware,
 } from "./AssignmentAPI";
 
 import {
@@ -46,6 +47,7 @@ const EMPTY_FORM = {
   laptopModelId: "",
   laptopAssetId: "",
   softwareId: "",
+  softwareAssetId: "",
   assignedBy:  data?.role || "",
   status:"Assigned",
   assignDate: new Date().toISOString().split("T")[0],
@@ -54,12 +56,14 @@ const  INITIAL_STATS=[];
 
 const Assignments = () => {
 
-  const [software, setSoftware] = useState([]);
+  const [softwareModels, setSoftwareModels] = useState([]);
+  const [individualSoftware, setIndividualSoftware] = useState([]);
   const [laptopModels, setLaptopModels] = useState([]);
   const [laptopAssets, setLaptopAssets] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [assignments, setAssignments] = useState(INITIAL_ASSIGNMENTS);
 
+  // ... rest of state ...
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [typeFilter, setTypeFilter] = useState("All");
@@ -74,8 +78,7 @@ const Assignments = () => {
   const [totalPages,setTotalPages]=useState(1);
   const[stats,setStats]=useState(INITIAL_STATS);
 
-
-console.log(data.firstName);
+  console.log(data.firstName);
 
   const fetchAssignments = async () => {
     try {
@@ -88,11 +91,10 @@ console.log(data.firstName);
       console.log(error);
     }
   };
-  console.log("All Assignments",assignments);
+  
   useEffect(()=>{
         fetchAssignments();
   },[currentPage,search,typeFilter,statusFilter]);
-  
 
   const fetchEmployees = async () => {
     try {
@@ -121,10 +123,19 @@ console.log(data.firstName);
     }
   };
 
-  const fetchSoftware = async () => {
+  const fetchSoftwareModels = async () => {
     try {
       const data = await getSoftware();
-      setSoftware(data?.allSoftware || []);
+      setSoftwareModels(data?.allSoftware || []);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchIndividualSoftware = async () => {
+    try {
+      const data = await getIndividualSoftware();
+      setIndividualSoftware(data?.existingSoftware || []);
     } catch (error) {
       console.log(error);
     }
@@ -134,7 +145,8 @@ console.log(data.firstName);
     fetchEmployees();
     fetchLaptopModels();
     fetchLaptopAssets();
-    fetchSoftware();
+    fetchSoftwareModels();
+    fetchIndividualSoftware();
   }, []);
 
   const showToast = (msg, type = "success") => {
@@ -177,6 +189,7 @@ console.log(data.firstName);
 
     if (f.assetType === "Software") {
       if (!f.softwareId) e.softwareId = "Software is required";
+      if (!f.softwareAssetId) e.softwareAssetId = "Individual license is required";
     }
 
     return e;
@@ -243,6 +256,7 @@ showToast("Asset Returned Successfully");
         laptopModelId: "",
         laptopAssetId: "",
         softwareId: "",
+        softwareAssetId: "",
       }));
     } else if (name === "laptopModelId") {
       setFormData((prev) => ({
@@ -250,7 +264,13 @@ showToast("Asset Returned Successfully");
         laptopModelId: value,
         laptopAssetId: "",
       }));
-    } 
+    } else if (name === "softwareId") {
+      setFormData((prev) => ({
+        ...prev,
+        softwareId: value,
+        softwareAssetId: "",
+      }));
+    }
     else if(name ==="assignedBy"){
 setFormData((prev) => ({
       ...prev,
@@ -274,7 +294,6 @@ setFormData((prev) => ({
       ? { bg: "#e0e7ff", color: "#6366f1" }
       : { bg: "#fce7f3", color: "#ec4899" };
   };
-
   const filteredLaptopAssets = laptopAssets.filter((asset) => {
     const assetModelId =
       typeof asset.laptopModelId === "object"
@@ -287,7 +306,19 @@ setFormData((prev) => ({
     return isSameModel && isAvailable;
   });
 
-  const selectedSoftwareDetails = software.find(
+  const filteredSoftwareAssets = individualSoftware.filter((asset) => {
+    const assetModelId =
+      typeof asset.softwareModelId === "object"
+        ? asset.softwareModelId?._id
+        : asset.softwareModelId;
+
+    const isSameModel = assetModelId === formData.softwareId;
+    const isAvailable = asset.status === "Available" || !asset.status;
+
+    return isSameModel && isAvailable;
+  });
+
+  const selectedSoftwareDetails = softwareModels.find(
     (item) => item._id === formData.softwareId
   );
 
@@ -356,7 +387,7 @@ setFormData((prev) => ({
               <CheckCircle size={22} />
             </div>
             <div>
-              <div className="assign-stat-value">{stats.assigned}</div>
+              <div className="assign-stat-value">{stats.activeAssignments || 0}</div>
               <div className="assign-stat-label">Assigned</div>
             </div>
           </div>
@@ -369,7 +400,7 @@ setFormData((prev) => ({
               <RotateCcw size={22} />
             </div>
             <div>
-              <div className="assign-stat-value">{stats.returned}</div>
+              <div className="assign-stat-value">{stats.returnedAssignments || 0}</div>
               <div className="assign-stat-label">Returned</div>
             </div>
           </div>
@@ -382,7 +413,7 @@ setFormData((prev) => ({
               <Laptop size={22} />
             </div>
             <div>
-              <div className="assign-stat-value">{stats.laptops}</div>
+              <div className="assign-stat-value">{stats.laptopsAssigned || 0}</div>
               <div className="assign-stat-label">Laptops Assigned</div>
             </div>
           </div>
@@ -395,7 +426,7 @@ setFormData((prev) => ({
               <Package size={22} />
             </div>
             <div>
-              <div className="assign-stat-value">{stats.software}</div>
+              <div className="assign-stat-value">{stats.softwareAssigned || 0}</div>
               <div className="assign-stat-label">Software Assigned</div>
             </div>
           </div>
@@ -825,8 +856,8 @@ setFormData((prev) => ({
                                   : "assign-input"
                               }
                             >
-                              <option value="">Select software</option>
-                              {software.map((item) => (
+                              <option value="">Select software model</option>
+                              {softwareModels.map((item) => (
                                 <option key={item._id} value={item._id}>
                                   {item.softwareName}
                                 </option>
@@ -843,18 +874,38 @@ setFormData((prev) => ({
 
                       <div className="assign-form-row">
                         <div className="assign-form-group assign-form-group--full">
-                          <label>Software Details</label>
-                          <input
-                            type="text"
-                            className="assign-input"
-                            readOnly
-                            value={
-                              selectedSoftwareDetails
-                                ? `${selectedSoftwareDetails.softwareName}${selectedSoftwareDetails.version ? ` - ${selectedSoftwareDetails.version}` : ""}`
-                                : ""
-                            }
-                            placeholder="Selected software details will appear here"
-                          />
+                          <label>
+                            Software License <span style={{ color: "#ef4444" }}>*</span>
+                          </label>
+                          <div className="assign-select-wrap">
+                            <select
+                              name="softwareAssetId"
+                              value={formData.softwareAssetId}
+                              onChange={handleFormChange}
+                              className={
+                                formErrors.softwareAssetId
+                                  ? "assign-input assign-input--error"
+                                  : "assign-input"
+                              }
+                              disabled={!formData.softwareId}
+                            >
+                              <option value="">
+                                {formData.softwareId
+                                  ? "Select individual license"
+                                  : "First select software model"}
+                              </option>
+                              {filteredSoftwareAssets.map((asset) => (
+                                <option key={asset._id} value={asset._id}>
+                                  {asset.licenseKey}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          {formErrors.softwareAssetId && (
+                            <span className="assign-field-error">
+                              {formErrors.softwareAssetId}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </>

@@ -969,6 +969,78 @@
   font-size: 13px;
 }
 
+/* ── Pagination ─────────────────────────── */
+.emp-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 16px 20px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+.emp-pagination-info {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.emp-pagination-buttons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.emp-btn-page {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+  border: 2px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emp-btn-page:hover:not(:disabled) {
+  border-color: #6366f1;
+  color: #6366f1;
+  background: #f8fafc;
+}
+
+.emp-btn-page--active {
+  background-color: #6366f1;
+  color: #ffffff;
+  border-color: #6366f1;
+}
+
+.emp-btn-page:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.emp-btn-page-nav {
+  gap: 6px;
+  padding: 0 14px;
+}
+
+.emp-pagination-ellipsis {
+  color: #94a3b8;
+  font-weight: 600;
+  padding: 0 4px;
+  user-select: none;
+}
+
+
 /* ── Notification Item ── */
 .nf-item {
   display: flex;

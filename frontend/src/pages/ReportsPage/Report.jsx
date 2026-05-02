@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import "./Report.css";
 import {
   BarChart3,
@@ -17,63 +17,63 @@ import {
   Activity,
   Zap,
   RefreshCw,
+  Loader2,
 } from "lucide-react";
+
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="reports-chart-tooltip">
+        <span className="reports-tooltip-title">{label}</span>
+        {payload.map((entry, index) => (
+          <div key={index} className="reports-tooltip-item">
+            <div className="reports-tooltip-dot" style={{ background: entry.color }}></div>
+            <span className="reports-tooltip-label">{entry.name}</span>
+            <span className="reports-tooltip-value">{entry.value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomLegend = (props) => {
+  const { payload } = props;
+  return (
+    <div className="reports-custom-legend">
+      {payload.map((entry, index) => (
+        <div key={`item-${index}`} className="reports-legend-pill">
+          <div className="reports-legend-dot" style={{ background: entry.color }}></div>
+          <span>{entry.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 import Navbar from "../../components/navBar/NavBar";
 import Sidebar from "../../components/sideBar/SideBar";
-
-/* ─── Mock Data ─────────────────────────── */
-const LIFECYCLE_DATA = [
-  { id: 1, assetName: "Dell XPS 15 #101", type: "Laptop", purchaseDate: "2022-01-15", age: 37, status: "Replace Soon", assignedTo: "Rajesh Kumar", condition: "Good" },
-  { id: 2, assetName: 'MacBook Pro 16" #102', type: "Laptop", purchaseDate: "2023-11-20", age: 15, status: "Active", assignedTo: "Priya Sharma", condition: "Excellent" },
-  { id: 3, assetName: "HP EliteBook #103", type: "Laptop", purchaseDate: "2024-02-10", age: 12, status: "Active", assignedTo: "Amit Patel", condition: "Excellent" },
-  { id: 4, assetName: "Lenovo ThinkPad #104", type: "Laptop", purchaseDate: "2021-09-18", age: 41, status: "Expired", assignedTo: "Unassigned", condition: "Fair" },
-  { id: 5, assetName: "ASUS ROG #105", type: "Laptop", purchaseDate: "2023-06-10", age: 20, status: "Active", assignedTo: "Vikram Singh", condition: "Good" },
-];
-
-const SOFTWARE_EXPIRY = [
-  { id: 1, name: "AutoCAD", vendor: "Autodesk", expiryDate: "2025-02-28", daysLeft: 4, status: "Expired", licenses: 15, cost: 220 },
-  { id: 2, name: "Adobe Creative Suite", vendor: "Adobe", expiryDate: "2025-03-15", daysLeft: 19, status: "Critical", licenses: 50, cost: 54.99 },
-  { id: 3, name: "GitHub Enterprise", vendor: "GitHub", expiryDate: "2025-08-30", daysLeft: 187, status: "Upcoming", licenses: 120, cost: 21 },
-  { id: 4, name: "Tableau Desktop", vendor: "Salesforce", expiryDate: "2025-11-10", daysLeft: 259, status: "Upcoming", licenses: 25, cost: 70 },
-  { id: 5, name: "Microsoft Office 365", vendor: "Microsoft", expiryDate: "2025-12-31", daysLeft: 310, status: "Active", licenses: 300, cost: 12.5 },
-];
-
-const GROWTH_FORECAST = [
-  { year: 2024, employees: 1000, laptops: 265, software: 67, totalCost: 1250000 },
-  { year: 2025, employees: 1050, laptops: 278, software: 70, totalCost: 1312500 },
-  { year: 2026, employees: 1103, laptops: 292, software: 74, totalCost: 1378125 },
-  { year: 2027, employees: 1158, laptops: 307, software: 78, totalCost: 1447031 },
-];
-
-const ASSIGNMENT_HISTORY = [
-  { month: "Aug 2024", laptops: 12, software: 45, total: 57 },
-  { month: "Sep 2024", laptops: 8, software: 32, total: 40 },
-  { month: "Oct 2024", laptops: 15, software: 51, total: 66 },
-  { month: "Nov 2024", laptops: 10, software: 38, total: 48 },
-  { month: "Dec 2024", laptops: 18, software: 62, total: 80 },
-  { month: "Jan 2025", laptops: 14, software: 47, total: 61 },
-];
-
-const ASSET_UTILIZATION = [
-  { category: "Laptops", total: 265, inUse: 245, available: 15, underRepair: 5, utilization: 92 },
-  { category: "Software", total: 67, inUse: 54, available: 13, expired: 0, utilization: 81 },
-];
-
-const DEPARTMENT_ALLOCATION = [
-  { department: "Engineering", laptops: 80, software: 18, employees: 120 },
-  { department: "IT Operations", laptops: 35, software: 12, employees: 45 },
-  { department: "Sales", laptops: 55, software: 8, employees: 85 },
-  { department: "Marketing", laptops: 25, software: 9, employees: 38 },
-  { department: "HR", laptops: 15, software: 5, employees: 22 },
-  { department: "Finance", laptops: 20, software: 7, employees: 30 },
-  { department: "Design", laptops: 18, software: 5, employees: 28 },
-  { department: "Analytics", laptops: 12, software: 3, employees: 18 },
-];
+import { fetchReportData } from "./ReportAPI";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const Report = () => {
   const [selectedReport, setSelectedReport] = useState("overview");
-  const [dateRange, setDateRange] = useState("all");
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
 
   const showToast = (msg, type = "success") => {
@@ -81,21 +81,99 @@ const Report = () => {
     setTimeout(() => setToast(null), 3200);
   };
 
-  const handleExport = (reportType) => {
-    showToast(`Exporting ${reportType} report...`);
+  useEffect(() => {
+    const loadReportData = async () => {
+      try {
+        setLoading(true);
+        const res = await fetchReportData();
+        if (res.success) {
+          setData(res.data);
+        } else {
+          setError(res.message);
+        }
+      } catch (err) {
+        setError(err.message || "Failed to load reports");
+        showToast(err.message || "Connection error", "error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadReportData();
+  }, []);
+
+  const downloadPDF = (title, headers, body, fileName) => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text(title, 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
+
+    autoTable(doc, {
+      startY: 28,
+      head: [headers],
+      body: body,
+      theme: "grid",
+      headStyles: { fillColor: [99, 102, 241] }, // Indigo-500
+    });
+
+    doc.save(fileName);
   };
 
-  const stats = useMemo(
-    () => ({
-      totalAssets: 265 + 67,
-      activeAssignments: 245 + 54,
-      expiringLicenses: SOFTWARE_EXPIRY.filter((s) => s.daysLeft <= 90).length,
-      replacementDue: LIFECYCLE_DATA.filter((l) => l.status === "Replace Soon" || l.status === "Expired").length,
-      avgUtilization: Math.round(((245 + 54) / (265 + 67)) * 100),
-      forecastGrowth: 5,
-    }),
-    []
-  );
+  const downloadJSON = (jsonData, fileName) => {
+    const blob = new Blob([JSON.stringify(jsonData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExport = (reportType) => {
+    showToast(`Generating ${reportType} report...`);
+    
+    try {
+      if (reportType === "complete") {
+        downloadJSON(data, "complete_report.json");
+      } else if (reportType === "assignment-history") {
+        const headers = ["Month", "Laptops Assigned", "Software Licenses"];
+        const body = data.assignmentHistory.map(item => [item.month, item.laptops, item.software]);
+        downloadPDF("Assignment History Report", headers, body, "assignment_history.pdf");
+      } else if (reportType === "lifecycle") {
+        const headers = ["Asset Name", "Purchase Date", "Age (Months)", "Assigned To", "Condition", "Status"];
+        const body = data.lifecycleData.map(item => {
+          const d = new Date(item.purchaseDate).toLocaleDateString("en-GB");
+          return [item.assetName, d, item.age, item.assignedTo, item.condition, item.status];
+        });
+        downloadPDF("Laptop Lifecycle Report", headers, body, "lifecycle_report.pdf");
+      } else if (reportType === "software-expiry") {
+        const headers = ["Software", "Vendor", "Expiry Date", "Assigned To", "Days Left", "Status"];
+        const body = data.softwareExpiry.map(item => {
+          const d = new Date(item.expiryDate).toLocaleDateString("en-GB");
+          return [item.name, item.vendor, d, item.assignedTo, item.daysLeft, item.status];
+        });
+        downloadPDF("Software Expiry Report", headers, body, "software_expiry_report.pdf");
+      } else if (reportType === "forecast") {
+        const headers = ["Year", "Est. Employees", "Est. Laptops", "Est. Software"];
+        const body = [0, 1, 2, 3].map(i => {
+          const year = new Date().getFullYear() + i;
+          const multiplier = Math.pow(1.05, i);
+          const emp = Math.round(100 * multiplier);
+          const lap = Math.round(data.stats.totalAssets * 0.8 * multiplier);
+          const soft = Math.round(data.stats.totalAssets * 0.2 * multiplier);
+          return [year, emp, lap, soft];
+        });
+        downloadPDF("Growth Forecast Report", headers, body, "growth_forecast.pdf");
+      }
+      setTimeout(() => showToast(`${reportType} report exported successfully!`, "success"), 500);
+    } catch (err) {
+      showToast(`Failed to export ${reportType} report`, "error");
+    }
+  };
 
   const getLifecycleStatusColor = (status) => {
     const colors = {
@@ -116,6 +194,38 @@ const Report = () => {
     return colors[status] || colors.Active;
   };
 
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <Sidebar />
+        <div className="reports-page reports-page--loading">
+          <Loader2 size={40} className="reports-spinner" />
+          <p>Generating real-time analytics...</p>
+        </div>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <Navbar />
+        <Sidebar />
+        <div className="reports-page reports-page--error">
+          <AlertTriangle size={50} color="#ef4444" />
+          <h2>Report Generation Failed</h2>
+          <p>{error}</p>
+          <button className="reports-btn reports-btn--primary" onClick={() => window.location.reload()}>
+            Try Again
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  const { stats, lifecycleData, softwareExpiry, departmentAllocation, assignmentHistory } = data;
+
   return (
     <>
       <Navbar />
@@ -135,7 +245,7 @@ const Report = () => {
             </div>
             <div>
               <h1 className="reports-title">Reports & Forecasting</h1>
-              <p className="reports-subtitle">Analytics, lifecycle tracking, and growth projections</p>
+              <p className="reports-subtitle">Live analytics, lifecycle tracking, and growth projections</p>
             </div>
           </div>
           <div className="reports-header-right">
@@ -242,41 +352,59 @@ const Report = () => {
                     <Download size={16} />
                   </button>
                 </div>
-                <div className="reports-chart">
-                  <div className="reports-bar-chart">
-                    {ASSIGNMENT_HISTORY.map((item, idx) => {
-                      const maxTotal = Math.max(...ASSIGNMENT_HISTORY.map((i) => i.total));
-                      return (
-                        <div key={idx} className="reports-bar-group">
-                          <div 
-                            className="reports-bar-container" 
-                            data-total={`${item.total} Total`}
-                            title={`Laptops: ${item.laptops}, Software: ${item.software}`}
-                          >
-                            <div 
-                              className="reports-bar reports-bar--software" 
-                              style={{ height: `${(item.software / maxTotal) * 100}%` }}
-                            ></div>
-                            <div 
-                              className="reports-bar reports-bar--laptops" 
-                              style={{ height: `${(item.laptops / maxTotal) * 100}%` }}
-                            ></div>
-                          </div>
-                          <span className="reports-bar-label">{item.month.split(' ')[0]}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="reports-chart-legend">
-                    <div className="reports-legend-item">
-                      <span className="reports-legend-dot" style={{ background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)' }}></span>
-                      <span>Laptops Assigned</span>
-                    </div>
-                    <div className="reports-legend-item">
-                      <span className="reports-legend-dot" style={{ background: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)' }}></span>
-                      <span>Software Licenses</span>
-                    </div>
-                  </div>
+                <div className="reports-chart-container">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={assignmentHistory}
+                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient id="colorLaptops" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15}/>
+                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="colorSoftware" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#ec4899" stopOpacity={0.15}/>
+                          <stop offset="95%" stopColor="#ec4899" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis 
+                        dataKey="month" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }}
+                        dy={10}
+                      />
+                      <YAxis 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Area
+                        type="monotone"
+                        dataKey="laptops"
+                        name="Laptops Assigned"
+                        stroke="#6366f1"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#colorLaptops)"
+                        activeDot={{ r: 6, strokeWidth: 0 }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="software"
+                        name="Software Licenses"
+                        stroke="#ec4899"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#colorSoftware)"
+                        activeDot={{ r: 6, strokeWidth: 0 }}
+                      />
+                      <Legend content={<CustomLegend />} />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
 
@@ -289,7 +417,7 @@ const Report = () => {
                   </div>
                 </div>
                 <div className="reports-table-simple">
-                  {DEPARTMENT_ALLOCATION.slice(0, 5).map((dept) => (
+                  {departmentAllocation.slice(0, 5).map((dept) => (
                     <div key={dept.department} className="reports-dept-row">
                       <div className="reports-dept-name">{dept.department}</div>
                       <div className="reports-dept-stats">
@@ -302,6 +430,7 @@ const Report = () => {
                       </div>
                     </div>
                   ))}
+                  {departmentAllocation.length === 0 && <p className="reports-empty">No department data</p>}
                 </div>
               </div>
 
@@ -314,22 +443,20 @@ const Report = () => {
                   </div>
                 </div>
                 <div className="reports-utilization">
-                  {ASSET_UTILIZATION.map((asset) => (
-                    <div key={asset.category} className="reports-util-item">
-                      <div className="reports-util-header">
-                        <span className="reports-util-label">{asset.category}</span>
-                        <span className="reports-util-pct">{asset.utilization}%</span>
-                      </div>
-                      <div className="reports-util-bar-bg">
-                        <div className="reports-util-bar-fill" style={{ width: `${asset.utilization}%` }}></div>
-                      </div>
-                      <div className="reports-util-stats">
-                        <span>{asset.inUse} In Use</span>
-                        <span>·</span>
-                        <span>{asset.available} Available</span>
-                      </div>
+                  <div className="reports-util-item">
+                    <div className="reports-util-header">
+                      <span className="reports-util-label">System-wide Utilization</span>
+                      <span className="reports-util-pct">{stats.avgUtilization}%</span>
                     </div>
-                  ))}
+                    <div className="reports-util-bar-bg">
+                      <div className="reports-util-bar-fill" style={{ width: `${stats.avgUtilization}%` }}></div>
+                    </div>
+                    <div className="reports-util-stats">
+                      <span>{stats.activeAssignments} Assigned</span>
+                      <span>·</span>
+                      <span>{stats.totalAssets - stats.activeAssignments} Available</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -362,7 +489,7 @@ const Report = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {LIFECYCLE_DATA.map((item) => {
+                    {lifecycleData.map((item) => {
                       const statusColor = getLifecycleStatusColor(item.status);
                       return (
                         <tr key={item.id}>
@@ -397,6 +524,9 @@ const Report = () => {
                         </tr>
                       );
                     })}
+                    {lifecycleData.length === 0 && (
+                       <tr><td colSpan="6" className="reports-empty">No lifecycle data found</td></tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -424,14 +554,13 @@ const Report = () => {
                       <th>Software</th>
                       <th>Vendor</th>
                       <th>Expiry Date</th>
+                      <th>Assigned To</th>
                       <th>Days Left</th>
-                      <th>Licenses</th>
-                      <th>Cost/Month</th>
                       <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {SOFTWARE_EXPIRY.map((item) => {
+                    {softwareExpiry.map((item) => {
                       const statusColor = getSoftwareStatusColor(item.status);
                       return (
                         <tr key={item.id}>
@@ -452,14 +581,11 @@ const Report = () => {
                               })}
                             </div>
                           </td>
+                          <td>{item.assignedTo}</td>
                           <td>
                             <span className={`reports-days-left ${item.daysLeft <= 30 ? "reports-days-left--critical" : item.daysLeft <= 90 ? "reports-days-left--warning" : ""}`}>
                               {item.daysLeft > 0 ? `${item.daysLeft} days` : "Expired"}
                             </span>
-                          </td>
-                          <td>{item.licenses}</td>
-                          <td>
-                            <span className="reports-cost">${item.cost.toFixed(2)}</span>
                           </td>
                           <td>
                             <span className="reports-status-badge" style={{ background: statusColor.bg, color: statusColor.color }}>
@@ -469,6 +595,9 @@ const Report = () => {
                         </tr>
                       );
                     })}
+                    {softwareExpiry.length === 0 && (
+                       <tr><td colSpan="5" className="reports-empty">No expiring licenses found</td></tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -492,23 +621,25 @@ const Report = () => {
               <div className="reports-forecast-table">
                 <div className="reports-forecast-row reports-forecast-row--header">
                   <div>Year</div>
-                  <div>Employees</div>
-                  <div>Laptops</div>
-                  <div>Software</div>
-                  <div>Est. Total Cost</div>
+                  <div>Est. Employees</div>
+                  <div>Est. Laptops</div>
+                  <div>Est. Software</div>
                 </div>
-                {GROWTH_FORECAST.map((item, idx) => (
-                  <div key={item.year} className={`reports-forecast-row ${idx === 0 ? "reports-forecast-row--current" : ""}`}>
-                    <div className="reports-forecast-year">
-                      {item.year}
-                      {idx === 0 && <span className="reports-forecast-badge">Current</span>}
+                {[0, 1, 2, 3].map((i) => {
+                   const year = new Date().getFullYear() + i;
+                   const multiplier = Math.pow(1.05, i);
+                   return (
+                    <div key={year} className={`reports-forecast-row ${i === 0 ? "reports-forecast-row--current" : ""}`}>
+                      <div className="reports-forecast-year">
+                        {year}
+                        {i === 0 && <span className="reports-forecast-badge">Current</span>}
+                      </div>
+                      <div>{Math.round(100 * multiplier)}</div>
+                      <div>{Math.round(stats.totalAssets * 0.8 * multiplier)}</div>
+                      <div>{Math.round(stats.totalAssets * 0.2 * multiplier)}</div>
                     </div>
-                    <div>{item.employees.toLocaleString()}</div>
-                    <div>{item.laptops}</div>
-                    <div>{item.software}</div>
-                    <div className="reports-forecast-cost">₹{(item.totalCost / 100000).toFixed(1)}L</div>
-                  </div>
-                ))}
+                   );
+                })}
               </div>
               <div className="reports-forecast-note">
                 <AlertTriangle size={16} />
@@ -530,35 +661,33 @@ const Report = () => {
                   </div>
                 </div>
                 <div className="reports-utilization-detail">
-                  {ASSET_UTILIZATION.map((asset) => (
-                    <div key={asset.category} className="reports-util-detail-card">
-                      <h4 className="reports-util-detail-title">{asset.category}</h4>
+                    <div className="reports-util-detail-card">
+                      <h4 className="reports-util-detail-title">System-wide Utilization</h4>
                       <div className="reports-util-detail-grid">
                         <div className="reports-util-detail-item">
-                          <span className="reports-util-detail-label">Total</span>
-                          <span className="reports-util-detail-value">{asset.total}</span>
+                          <span className="reports-util-detail-label">Total Assets</span>
+                          <span className="reports-util-detail-value">{stats.totalAssets}</span>
                         </div>
                         <div className="reports-util-detail-item">
                           <span className="reports-util-detail-label">In Use</span>
                           <span className="reports-util-detail-value" style={{ color: "#10b981" }}>
-                            {asset.inUse}
+                            {stats.activeAssignments}
                           </span>
                         </div>
                         <div className="reports-util-detail-item">
                           <span className="reports-util-detail-label">Available</span>
                           <span className="reports-util-detail-value" style={{ color: "#6366f1" }}>
-                            {asset.available}
+                            {stats.totalAssets - stats.activeAssignments}
                           </span>
                         </div>
                         <div className="reports-util-detail-item">
                           <span className="reports-util-detail-label">Utilization</span>
                           <span className="reports-util-detail-value" style={{ color: "#8b5cf6", fontSize: "20px" }}>
-                            {asset.utilization}%
+                            {stats.avgUtilization}%
                           </span>
                         </div>
                       </div>
                     </div>
-                  ))}
                 </div>
               </div>
 
@@ -570,7 +699,7 @@ const Report = () => {
                   </div>
                 </div>
                 <div className="reports-dept-ranking">
-                  {DEPARTMENT_ALLOCATION.sort((a, b) => b.laptops + b.software - (a.laptops + a.software))
+                  {departmentAllocation.sort((a, b) => b.laptops + b.software - (a.laptops + a.software))
                     .slice(0, 5)
                     .map((dept, idx) => (
                       <div key={dept.department} className="reports-dept-rank-item">
@@ -581,6 +710,7 @@ const Report = () => {
                         </div>
                       </div>
                     ))}
+                  {departmentAllocation.length === 0 && <p className="reports-empty">No department ranking data</p>}
                 </div>
               </div>
             </div>

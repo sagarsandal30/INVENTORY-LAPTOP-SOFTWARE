@@ -133,16 +133,21 @@ const Settings = () => {
       showToast("Passwords do not match", "error");
       return;
     }
-        await updateProfilePassword(securityData);
-
-    // showToast("Security settings updated");
-    // setSecurityData({
-    //   currentPassword: "",
-    //   newPassword: "",
-    //   confirmPassword: "",
-    //   twoFactorAuth: securityData.twoFactorAuth,
-    //   sessionTimeout: securityData.sessionTimeout,
-    // });
+    
+    try {
+      await updateProfilePassword({
+        currentPassword: securityData.currentPassword,
+        newPassword: securityData.newPassword
+      });
+      showToast("Security settings updated");
+      setSecurityData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error) {
+      showToast(error.message || "Failed to update password", "error");
+    }
   };
 
   

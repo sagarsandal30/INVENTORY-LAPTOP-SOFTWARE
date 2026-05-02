@@ -16,11 +16,12 @@ import {
   ChevronDown,
   Filter,
   Download,
-  Eye,
+  ChevronRight,
+  Eye as EyeIcon,
   AlertTriangle,
   ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/navBar/NavBar";
 import SideBar from "../../components/sideBar/SideBar";
 import {
@@ -43,7 +44,7 @@ const CATEGORIES = [
   "Analytics",
 ];
 
-const LIC_TYPES = ["Subscription", "Per Seat", "Perpetual", "Open Source"];
+const LIC_TYPES = ["Subscription", "Per Seat", "Perpetual"];
 
 const VENDORS = [
   "Microsoft",
@@ -90,6 +91,7 @@ const Software = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPage, setTotalPages] = useState(1);
   const [stats, setStats] = useState(initial_stats);
+  const navigate = useNavigate();
 
   const fetchSoftware = async () => {
     try {
@@ -550,10 +552,10 @@ const Software = () => {
                         <div className="sw-actions">
                           <button
                             className="sw-action-btn sw-action-btn--view"
-                            title="View details"
-                            onClick={() => handleViewDetails(item)}
+                            title="View Licenses"
+                            onClick={() => navigate(`/software-licenses/${item._id}`)}
                           >
-                            <Eye size={15} />
+                            <EyeIcon size={15} />
                           </button>
 
                           <button

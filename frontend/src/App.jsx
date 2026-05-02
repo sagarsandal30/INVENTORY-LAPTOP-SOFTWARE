@@ -18,6 +18,8 @@ import LaptopAssets from "./pages/PhysicalLaptop/LaptopAssets";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoutes";
 import EmployeeQueriesPage from "./pages/QueryPage/EmployeeQueryPage";
 import ViewAssets from "./pages/ViewAssets/ViewAssets";
+import AIDashboard from "./pages/AIDashboard/AIDashboard";
+import IndividualSoftware from "./pages/IndividualSoftware/IndividualSoftware.jsx";
 
 function App() {
   return (
@@ -96,7 +98,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/settings" element={<Settings />} />
+        <Route path="/profileSettings" element={<Settings />} />
 
         <Route
           path="/queries"
@@ -112,6 +114,22 @@ function App() {
   element={
     <ProtectedRoute allowedRoles={["Employee"]}>
       <ViewAssets />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/ai-maintenance"
+  element={
+    <ProtectedRoute allowedRoles={["Admin", "IT Operations"]}>
+      <AIDashboard />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/software-licenses/:softwareId"
+  element={
+    <ProtectedRoute allowedRoles={["Admin", "IT Operations"]}>
+      <IndividualSoftware />
     </ProtectedRoute>
   }
 />

@@ -98,3 +98,17 @@ return response.data;
      throw error.response?.data || { message: "Fetching laptop models failed" };
     }
 }
+
+export const getEmployees = async () => {
+  try {
+    const result = await axios.get(
+      `${BASE_URL}${APIRoutes.AVALIABLE_EMPLOYEE}`,
+      {
+         ...getConfig(),
+      }
+    );
+    return result.data;
+  } catch (error) {
+    throw error.response?.data || { message: "Getting All Employees failed" };
+  }
+};
