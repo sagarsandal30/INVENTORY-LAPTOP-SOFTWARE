@@ -33,7 +33,7 @@ import { createLaptopModel,deleteLaptopModelById, getLaptopModelById, getLaptopM
   }
  
 
-const LaptopModels = () => {
+  const LaptopModels = () => {
   const navigate=useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
