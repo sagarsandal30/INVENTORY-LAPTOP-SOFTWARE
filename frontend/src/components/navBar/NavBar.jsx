@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import "./Navbar.css";
+import "./NavBar.css";
 import { Bell, Mail, Globe, Settings as SettingsIcon,LogOut  } from "lucide-react";
 import {getAllNotifications} from "../../pages/NotificationPage/NotificationAPI"
 import { useEffect, useState } from "react";
