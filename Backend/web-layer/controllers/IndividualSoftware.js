@@ -20,8 +20,8 @@ catch(error){
 
 const getAllSoftware=async(req,res,next)=>{
 try{
-    const {page,limit,search,catFilter}=req.query
-     const softwares = await getSoftware(page,limit,search,catFilter);
+    const {page,limit,search,statusFilter,softwareModelId}=req.query
+     const softwares = await getSoftware(page,limit,search,statusFilter,softwareModelId);
       res.status(200).json({
       success: true,
       message: "Software fetched successfully",

@@ -41,10 +41,26 @@ const updateProfileService = async (userId, profileData) => {
   return user;
 };
 
+const updatePasswordService = async (userId, currentPassword, newPassword) => {
+  const user = await User.findById(userId);
 
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const isMatch = await user.comparePassword(currentPassword);
+  if (!isMatch) {
+    throw new Error("Incorrect current password");
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  return true;
+};
 
 module.exports = {
   getProfileService,
   updateProfileService,
-
+  updatePasswordService,
 };

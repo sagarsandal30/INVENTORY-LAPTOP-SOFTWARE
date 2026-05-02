@@ -2,12 +2,18 @@ const Notification =require("../models/Notification");
 
 const getNotifications= async(page,limit,search,category,filterType)=>{
 
+
   const totalNotifications=await Notification.countDocuments();
 
   const totalPages=Math.ceil(totalNotifications/limit);
   const skip=(page-1)*limit;
 
     const filter={};
+if(filterType==="Unread"){
+    const UnreadNotify= await Notification.find({read:false});
+    return UnreadNotify;
+}
+
     if(filterType&&filterType!=="All"){
         filter.type=filterType;
     }
@@ -61,4 +67,8 @@ const markNotificationRead = async (id) => {
      );
      return updated;
 };
-module.exports={getNotifications, deleteNotificationById, markAllNotificationsRead,markNotificationRead};
+
+const deleteAllNotif = async () => {
+await Notification.deleteMany({});
+};
+module.exports={getNotifications, deleteNotificationById, markAllNotificationsRead,markNotificationRead,deleteAllNotif};

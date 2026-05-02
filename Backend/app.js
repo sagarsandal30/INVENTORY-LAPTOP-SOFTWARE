@@ -17,6 +17,11 @@ const assignmentRouter = require("./web-layer/routes/AssignmentRoutes");
 const dashboardRouter = require("./web-layer/routes/DashboardRoutes");
 const settingsRouter=require("./web-layer/routes/Setting");
 const notificationRouter=require("./web-layer/routes/NotificationRoutes");
+const aiRouter = require("./web-layer/routes/aiRoutes");
+const individualSoftwareRouter = require("./web-layer/routes/IndividualSoftwareRoute");
+const reportRouter = require("./web-layer/routes/ReportRoutes");
+const myAssetsRouter = require("./web-layer/routes/MyAssetsRoute");
+const initAiCron = require("./cron/aiCron");
 const app = express();
 
 // Middleware
@@ -35,6 +40,10 @@ app.use("/api",dashboardRouter);
 app.use("/api/settings", settingsRouter);
 app.use("/api/queries", queryRoutes);
 app.use("/api/notifications",notificationRouter);
+app.use("/api/ai", aiRouter);
+app.use("/api/software-licenses", individualSoftwareRouter);
+app.use("/api/reports", reportRouter);
+app.use("/api/my-assets", myAssetsRouter);
 
 // Start server
 const PORT = process.env.PORT || 5000;
@@ -43,6 +52,7 @@ const start = async () => {
   try {
   await  connectRedis();
     await connectDB();
+    initAiCron();
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

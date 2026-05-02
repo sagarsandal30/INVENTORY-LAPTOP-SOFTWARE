@@ -15,18 +15,44 @@ const clearLaptopModelCache = async () => {
 
 // CREATE a new Laptop
 const createLaptopModel = async (laptopData) => {
-     const existingLaptop = await LaptopModel.findOne({ modelName: laptopData.modelName });
+  const existingLaptop = await LaptopModel.findOne({ modelName: laptopData.modelName });
   if (existingLaptop) {
-    // If it exists, throw an error. The Controller will catch this and send a 400 Bad Request
-    throw new Error("A laptop model with this name already  exists in the inventory.");
+    throw new Error("A laptop model with this name already exists in the inventory.");
   }
-    const laptop=new LaptopModel(laptopData);
-    await redisClient.del("Dashboard:data");
-    await clearLaptopModelCache();
-    await laptop.save();
 
-    return laptop;
+  // Set initial stats based on totalAssets
+  const totalAssets = parseInt(laptopData.totalAssets) || 0;
+  laptopData.avaliable = totalAssets;
+  laptopData.inUse = 0;
+  laptopData.underRepair = 0;
+  laptopData.retired = 0;
 
+  const laptop = new LaptopModel(laptopData);
+  await laptop.save();
+
+  // Automatically generate physical assets
+  if (totalAssets > 0) {
+    const assets = [];
+    const brandPrefix = laptop.brand.substring(0, 3).toUpperCase();
+    const modelPrefix = laptop.modelName.substring(0, 3).toUpperCase();
+    const timestamp = Date.now().toString().slice(-4);
+
+    for (let i = 1; i <= totalAssets; i++) {
+      assets.push({
+        laptopModelId: laptop._id,
+        serialNumber: `${brandPrefix}-${modelPrefix}-${timestamp}-${String(i).padStart(3, '0')}`,
+        status: "Available",
+        condition: "Good",
+        modelName: laptop.modelName
+      });
+    }
+    await LaptopAsset.insertMany(assets);
+  }
+
+  await redisClient.del("Dashboard:data");
+  await clearLaptopModelCache();
+
+  return laptop;
 }
 // Read laptops
 const getLaptopModel=async(page,limit,search)=>{
@@ -80,7 +106,7 @@ const getLaptopModel=async(page,limit,search)=>{
             totalAssets:stats[0]?.totalAssets,
             totalAvailable:stats[0]?.totalAvailable,
     totalInUse:stats[0]?.totalInUse,
-    totalUnderRepair:stats[0]?.totolUnderRepair
+    totalUnderRepair:stats[0]?.totalUnderRepair
         },
         totalPages,
 currentPage:page
@@ -112,28 +138,71 @@ await redisClient.setEx(cacheKey,60,JSON.stringify(singleLaptop));
        
     }
 
-const removeLaptopModel=async(laptopId)=>{
-    const deleteLaptop=await LaptopModel.deleteOne({_id:laptopId});
-    await redisClient.del("Dashboard:data");
-    await clearLaptopModelCache();
-    if(deleteLaptop.deletedCount === 0){
-        throw new Error("No laptop found for delete");
-    }
-    return deleteLaptop;
+const removeLaptopModel = async (laptopId) => {
+  // 1. Delete all associated physical assets first
+  await LaptopAsset.deleteMany({ laptopModelId: laptopId });
+
+  // 2. Delete the model
+  const deleteLaptop = await LaptopModel.deleteOne({ _id: laptopId });
+  
+  await redisClient.del("Dashboard:data");
+  await clearLaptopModelCache();
+
+  if (deleteLaptop.deletedCount === 0) {
+    throw new Error("No laptop model found for delete");
+  }
+  return deleteLaptop;
 }
 
 
-const modifyLaptopModel=async(laptopId,data)=>{
-    const updatedLaptopModel=await LaptopModel.findByIdAndUpdate(laptopId,data ,{
-      new: true,
-      runValidators: true
-    });
-        await redisClient.del("Dashboard:data");
-    await clearLaptopModelCache();
-    if(!updatedLaptopModel){
-        throw new Error("No laptop found for update");
+const modifyLaptopModel = async (laptopId, data) => {
+  const oldModel = await LaptopModel.findById(laptopId);
+  if (!oldModel) {
+    throw new Error("No laptop model found for update");
+  }
+
+  const oldTotal = oldModel.totalAssets || 0;
+  const newTotal = parseInt(data.totalAssets) || 0;
+
+  // Prevent reducing total assets manually if assets already exist
+  if (newTotal < oldTotal) {
+    throw new Error(`Cannot reduce total assets below current count (${oldTotal}). Please delete individual physical assets instead.`);
+  }
+
+  // Update the model
+  const updatedLaptopModel = await LaptopModel.findByIdAndUpdate(laptopId, data, {
+    new: true,
+    runValidators: true
+  });
+
+  // If totalAssets increased, generate additional physical assets
+  if (newTotal > oldTotal) {
+    const additionalCount = newTotal - oldTotal;
+    const assets = [];
+    const brandPrefix = updatedLaptopModel.brand.substring(0, 3).toUpperCase();
+    const modelPrefix = updatedLaptopModel.modelName.substring(0, 3).toUpperCase();
+    const timestamp = Date.now().toString().slice(-4);
+
+    for (let i = 1; i <= additionalCount; i++) {
+      assets.push({
+        laptopModelId: updatedLaptopModel._id,
+        serialNumber: `${brandPrefix}-${modelPrefix}-${timestamp}-${String(oldTotal + i).padStart(3, '0')}`,
+        status: "Available",
+        condition: "Good",
+        modelName: updatedLaptopModel.modelName
+      });
     }
-    return updatedLaptopModel;
+    await LaptopAsset.insertMany(assets);
+
+    // Update the available count to reflect new assets
+    updatedLaptopModel.avaliable = (updatedLaptopModel.avaliable || 0) + additionalCount;
+    await updatedLaptopModel.save();
+  }
+
+  await redisClient.del("Dashboard:data");
+  await clearLaptopModelCache();
+
+  return updatedLaptopModel;
 }
 
 module.exports={createLaptopModel,getLaptopModel,getOneLaptopModel,removeLaptopModel,modifyLaptopModel};

@@ -1,7 +1,7 @@
 const express=require("express");
 const softwareRouter = express.Router();
 const authMiddleware = require("../middlewares/AuthMiddleware");
-const {addSoftware , getAllSoftware,getSoftwareById,deleteSoftware,updateSoftware}=require("../controllers/IndividualSoftwareController")
+const {addSoftware , getAllSoftware,getSoftwareById,deleteSoftware,updateSoftware}=require("../controllers/IndividualSoftware")
 const allowRoles = require("../middlewares/AllowRoles");
 
 softwareRouter.use(authMiddleware);

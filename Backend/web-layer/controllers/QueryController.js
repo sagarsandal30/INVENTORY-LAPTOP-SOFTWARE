@@ -47,7 +47,7 @@ const getMyQueries = asyncHandler(async (req, res) => {
 const getQueryById = asyncHandler(async (req, res) => {
   const query = await queryService.getQueryById({
     queryId: req.params.id,
-    userId:  req.user._id,
+    userId:  req.user.id, // Fixed: Auth payload uses 'id'
     role:    req.user.role,
   });
 

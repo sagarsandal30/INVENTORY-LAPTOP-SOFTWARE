@@ -1,4 +1,5 @@
 const Software = require("../models/Software");
+const IndividualSoftware = require("../models/IndividualSoftware");
 const {redisClient}=require("../../Config/redisClient");
 
 
@@ -13,14 +14,45 @@ const clearSoftwareCache = async () => {
 
 // CREATE a new Software
 const createSoftware = async (softwareData) => {
-    
-    const software=new Software(softwareData);
+    console.log("Creating Software with data:", softwareData);
+    const totalLicenses = parseInt(softwareData.totalLicenses) || 0;
+    softwareData.usedLicenses = 0;
 
+    const software = new Software(softwareData);
     await software.save();
+    console.log("Software Model saved successfully:", software._id);
+
+    // Automatically generate individual software licenses
+    if (totalLicenses > 0) {
+        console.log(`Generating ${totalLicenses} licenses for software ${software.softwareName}`);
+        const licenses = [];
+        const vendorPrefix = (software.vendor || "UNK").substring(0, 3).toUpperCase();
+        const softwarePrefix = (software.softwareName || "SW").substring(0, 3).toUpperCase();
+        const timestamp = Date.now().toString().slice(-4);
+
+        for (let i = 1; i <= totalLicenses; i++) {
+            licenses.push({
+                softwareModelId: software._id,
+                licenseKey: `${vendorPrefix}-${softwarePrefix}-KEY-${timestamp}-${String(i).padStart(3, '0')}`,
+                status: "Available",
+                expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), 
+                renewalStatus: "Active"
+            });
+        }
+        
+        try {
+            const inserted = await IndividualSoftware.insertMany(licenses);
+            console.log(`Successfully inserted ${inserted.length} individual software records`);
+        } catch (err) {
+            console.error("CRITICAL ERROR generating individual software:", err.message);
+        }
+    } else {
+        console.warn("totalLicenses is 0 or invalid, skipping individual license generation.");
+    }
+
     await redisClient.del("dashboard:data");
     await clearSoftwareCache();
     return software;
-
 }
 // Read Software
 const getSoftware = async (page,limit,search,catFilter) => {
@@ -113,27 +145,63 @@ const getOneSoftware=async(softwareId)=>{
 }
 
 // Delete Software
-const removeSoftware=async(softwareId)=>{
-    const deleteSoftware=await Software.deleteOne({_id:softwareId});
-   await redisClient.del("dashboard:data");
-   await redisClient.del(`software:${softwareId}`);
-   await clearSoftwareCache();
+const removeSoftware = async (softwareId) => {
+    // 1. Delete all associated individual licenses first
+    await IndividualSoftware.deleteMany({ softwareModelId: softwareId });
 
-    if(deleteSoftware.deletedCount === 0){
+    // 2. Delete the software model
+    const deleteSoftware = await Software.deleteOne({ _id: softwareId });
+    
+    await redisClient.del("dashboard:data");
+    await redisClient.del(`software:${softwareId}`);
+    await clearSoftwareCache();
+
+    if (deleteSoftware.deletedCount === 0) {
         throw new Error("No software found for delete");
     }
     return deleteSoftware;
 }
 // Update software
-const modifySoftware=async(softwareId,data)=>{
-    const updated=await Software.findByIdAndUpdate(softwareId,data ,{
-      returnDocument: "after",
-      runValidators: true
-    });
-    await clearSoftwareCache();
-    if(!updated){
+const modifySoftware = async (softwareId, data) => {
+    const oldSoftware = await Software.findById(softwareId);
+    if (!oldSoftware) {
         throw new Error("No software found for update");
     }
+
+    const oldTotal = oldSoftware.totalLicenses || 0;
+    const newTotal = parseInt(data.totalLicenses) || 0;
+
+    // Prevent reducing total licenses manually
+    if (newTotal < oldTotal) {
+        throw new Error(`Cannot reduce total licenses below current count (${oldTotal}).`);
+    }
+
+    const updated = await Software.findByIdAndUpdate(softwareId, data, {
+        returnDocument: "after",
+        runValidators: true
+    });
+
+    // If totalLicenses increased, generate additional licenses
+    if (newTotal > oldTotal) {
+        const additionalCount = newTotal - oldTotal;
+        const licenses = [];
+        const vendorPrefix = updated.vendor.substring(0, 3).toUpperCase();
+        const softwarePrefix = updated.softwareName.substring(0, 3).toUpperCase();
+        const timestamp = Date.now().toString().slice(-4);
+
+        for (let i = 1; i <= additionalCount; i++) {
+            licenses.push({
+                softwareModelId: updated._id,
+                licenseKey: `${vendorPrefix}-${softwarePrefix}-KEY-${timestamp}-${String(oldTotal + i).padStart(3, '0')}`,
+                status: "Available",
+                expiryDate: updated.expiryDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+                renewalStatus: "Active"
+            });
+        }
+        await IndividualSoftware.insertMany(licenses);
+    }
+
+    await clearSoftwareCache();
     return updated;
 }
 

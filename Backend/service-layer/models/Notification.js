@@ -14,10 +14,10 @@ const notificationSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["critical", "warning", "info", "success"],
-      default: "info",
+      enum: ["Unread", "Critical", "Warning", "Info", "Success"],
+      default: "Info",
     },
-// Used for Filtering tabs in ui
+// Used for Filtering tabs in UI
     category: {
       type: String,
       enum: ["Software", "Laptop", "Assignment", "System", "Query"],
@@ -28,17 +28,19 @@ const notificationSchema = new mongoose.Schema(
       type: String,
       default: "IT Ops",
     },
+    time:{
+      type: Date,
+      default: Date.now,
 
+    },
     read: {
       type: Boolean,
       default: false,
     },
-
     action: {
       type: String,
       default: "View Details",
     },
-
     targetRole: {
       type: String,
       enum: ["Admin", "IT Operations", "Manager", "Employee"],

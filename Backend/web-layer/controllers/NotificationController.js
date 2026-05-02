@@ -1,4 +1,5 @@
-const {getNotifications, deleteNotificationById,markAllNotificationsRead,markNotificationRead} =require("../../service-layer/services/NotificationService");
+const {getNotifications, deleteNotificationById,markAllNotificationsRead,markNotificationRead,deleteAllNotif} =
+require("../../service-layer/services/NotificationService");
 
 const getMyNotifications = async (req, res) => {
   try {
@@ -72,4 +73,21 @@ const markRead = async (req, res) => {
     });
   }
 };
-module.exports={getMyNotifications,deleteNotification,markAllRead,markRead};
+
+
+const deleteAllNotification = async (req, res) => {
+  try {
+    const updated=await deleteAllNotif();
+
+    res.status(200).json({
+      success: true,
+      message: "All notifications deleted Successfully",
+   
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+module.exports={getMyNotifications,deleteNotification,markAllRead,markRead,deleteAllNotification};

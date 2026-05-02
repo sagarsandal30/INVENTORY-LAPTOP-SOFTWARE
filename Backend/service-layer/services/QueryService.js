@@ -47,9 +47,10 @@ console.log("after fetch data ",id,username,email)
   await Notification.create({
     title:`${subject}`,  
     message:`${username} submitted a ${queryType}:${description}`,
-    type:priority==="High"?"Critical":"info",
+    type:(priority==="High" || priority==="Critical") ? "Critical" : "info",
     category:"Query",
     dept:user.department||"IT Ops",
+    time:Date.now(),
     read:false,
     action:"View Details",
      targetRole: "IT Operations",
@@ -76,7 +77,7 @@ const getMyQueries = async ( userId, page , limit,  status ) => {
  
 
   const skip  = (page - 1) * limit;
-  const total = await Query.countDocuments();
+  const total = await Query.countDocuments(filter);
 
   const queries = await Query.find(filter)
     .sort({ createdAt: -1 })
@@ -106,7 +107,7 @@ const getQueryById = async ({ queryId, userId, role }) => {
   }
 
   // Employees can only read their own queries
-  if (role === "employee" && query.employeeId.toString() !== userId.toString()) {
+  if (role === "Employee" && query.employeeId.toString() !== userId.toString()) {
     const err = new Error("Access denied.");
     err.statusCode = 403;
     throw err;

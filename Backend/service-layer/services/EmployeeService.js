@@ -14,26 +14,27 @@ const clearEmployeeListCache = async () => {
 
 // CREATE Employee
 const createEmployee = async (employeeData) => {
-  const existingEmployeeById = await Employee.findOne({
-    _id: employeeData._id
-  });
-
-  if (existingEmployeeById) {
-    throw new Error("Employee with this employee ID already exists.");
-  }
-
+  // Check if employee with same email already exists (safety for auto-creation)
   const existingEmployeeByEmail = await Employee.findOne({
     email: employeeData.email
   });
 
   if (existingEmployeeByEmail) {
-    throw new Error("Employee with this email already exists.");
+    // If it already exists and we are trying to link a user, update the userId
+    if (employeeData.userId && !existingEmployeeByEmail.userId) {
+      existingEmployeeByEmail.userId = employeeData.userId;
+      await existingEmployeeByEmail.save();
+      return existingEmployeeByEmail;
+    }
+    return existingEmployeeByEmail; // Return existing one instead of throwing if it's an auto-call
   }
 
   const employee = await Employee.create(employeeData);
-   // 🔥 clear cache here
-    await redisClient.del("dashboard:data");
+  
+  // clear cache
+  await redisClient.del("dashboard:data");
   await clearEmployeeListCache();
+  
   return employee;
 };
 

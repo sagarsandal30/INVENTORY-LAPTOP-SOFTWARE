@@ -13,12 +13,14 @@ const SoftwareSchema = new mongoose.Schema(
       enum: [
         "Microsoft",
         "Adobe",
-        "Google",
-        "Oracle",
+        "Salesforce",
+        "GitHub Inc.",
+        "Zoom",
         "Autodesk",
         "Atlassian",
+        "Oracle",
+        "Google",
         "Slack",
-        "Zoom",
         "VMware",
         "Other"
       ]
@@ -28,12 +30,13 @@ const SoftwareSchema = new mongoose.Schema(
       enum: [
         "Productivity",
         "Design",
-        "Development",
-        "Security",
-        "Engineering",
         "Communication",
-        "Database",
+        "Development",
+        "Engineering",
+        "Project Management",
         "Analytics",
+        "Security",
+        "Database",
         "Other"
       ],
       default: "Productivity"
@@ -68,14 +71,11 @@ const SoftwareSchema = new mongoose.Schema(
     },
     
     
-
     costPerMonth: {
       type: Number,
       required: true,
       min: 0
     },
-
-
     notes: {
       type: String,
       trim: true

@@ -1,114 +1,182 @@
-const Software = require("../models/IndividualSoftware");
+const mongoose = require("mongoose");
+const IndividualSoftware = require("../models/IndividualSoftware");
+const Notification = require("../models/Notification");
+const Software = require("../models/Software");
 
+// Helper to handle notifications for a license
+const checkAndNotify = async (license) => {
+    if (!license.expiryDate) return;
 
+    const now = new Date();
+    const daysLeft = Math.ceil((new Date(license.expiryDate) - now) / (1000 * 60 * 60 * 24));
+    let status = "Active";
 
-// CREATE a new Software
+    if (daysLeft <= 0) status = "Expired";
+    else if (daysLeft <= 30) status = "Critical";
+    else if (daysLeft <= 90) status = "Expiring Soon";
+
+    // Update license status if needed
+    if (license.renewalStatus !== status) {
+        license.renewalStatus = status;
+        if (daysLeft <= 0) license.status = "Expired";
+        await license.save();
+    }
+
+    // Create Notification if not Active
+    if (status !== "Active") {
+        const fullLicense = await IndividualSoftware.findById(license._id).populate("softwareModelId");
+        const softwareName = fullLicense.softwareModelId?.softwareName || "Software";
+
+        await Notification.create({
+            title: `Software License ${status}`,
+            message: `License key ${license.licenseKey} for ${softwareName} is ${status.toLowerCase()}. Expiry: ${new Date(license.expiryDate).toLocaleDateString()}`,
+            type: status === "Expired" || status === "Critical" ? "Critical" : "Warning",
+            category: "Software",
+            relatedModel: "Software",
+            relatedId: license._id,
+            targetRole: "IT Operations"
+        });
+    }
+};
+
+// CREATE a new Software License
 const createSoftware = async (softwareData) => {
-    
-    const software=new Software(softwareData);
-
+    const software = new IndividualSoftware(softwareData);
     await software.save();
-    return software;
-
-}
-// Read Software
-const getSoftware = async (page,limit,search,catFilter) => {
-    const skip=(page-1)*limit;
-
-    const filter={}
     
-    if(search&&search.trim()!==""){
-        filter.$or=[
-            {softwareName:{$regex:search,$options:"i"}},
-            {vendor:{$regex:search,$options:"i"}}
-        ]
-    }
-
-    if(catFilter&&catFilter!=="All"){
-        filter.category=catFilter;
-    }
-    const allSoftware=await Software.find();
-    const existingSoftware = await  Software.find(filter).sort({createdAt:-1}).skip(skip).limit(limit);
-    if (!existingSoftware) {
-        throw new Error("No Software found in the inventory.");
-    }
-    const totalSoftware=await Software.countDocuments();
-    const activeLicenses = await Software.countDocuments({
-  expiryDate: { $gt: new Date() }
-});
-//Critical / Expired
-const today = new Date();
-
-const critical = await Software.countDocuments({
-  expiryDate: { $lte: new Date(today.getTime() + 30*24*60*60*1000) }
-});
-//Upcoming Renewals
-// const upcoming = await Software.countDocuments({
-//   expiryDate: {
-//     $gt: new Date(Date.now() + 30*24*60*60*1000),
-//     $lte: new Date(Date.now() + 90*24*60*60*1000)
-//   }
-// });
-
-    const totalPages=Math.ceil(totalSoftware/limit);
-
-    const stats=await Software.aggregate(
-        [
-            {
-                $group:{
-                    _id:null,
-                    totalLicenses:{$sum:"$totalLicenses"},
-                    usedLicenses:{$sum:"$usedLicenses"},
-                }
-            }
-        ]
-    )
-
-    console.log(stats[0]?.usedLicenses);
-    console.log(stats[0]?.totalLicenses);
-
-    return {existingSoftware,
-        allSoftware,
-        totalPages,
-        currentPage:page,
-    stats:{
-        totalSoftwares:totalSoftware,
-        activeLicenses:activeLicenses,
-        totalLicenses:stats[0]?.totalLicenses,
-        usedLicenses:stats[0]?.usedLicenses,
-        critical:critical,
-        upcoming:upcoming
-    }};
+    // Immediate check for notification
+    await checkAndNotify(software);
+    
+    return software;
 }
 
-// READ a single SoftwareModel by its specific MongoDB ID
-const getOneSoftware=async(softwareId)=>{
-    const singleSoftware=await Software.findById(softwareId);
-    if(singleSoftware==null){
-        throw new Error("No  specific software found in the inventory.");
+// Read Software Licenses
+const getSoftware = async (page, limit, search, statusFilter, softwareModelId) => {
+    const skip = (page - 1) * limit;
+    const filter = {};
+
+    if (softwareModelId) {
+        if (mongoose.Types.ObjectId.isValid(softwareModelId)) {
+            filter.softwareModelId = new mongoose.Types.ObjectId(softwareModelId);
+        } else {
+            filter.softwareModelId = softwareModelId;
+        }
+    }
+
+    if (search && search.trim() !== "") {
+        filter.$or = [
+            { licenseKey: { $regex: search, $options: "i" } }
+        ];
+    }
+
+    if (statusFilter && statusFilter !== "All") {
+        filter.status = statusFilter;
+    }
+
+    const totalLicenses = await IndividualSoftware.countDocuments(filter);
+    const existingSoftware = await IndividualSoftware.find(filter)
+        .populate("softwareModelId")
+        .populate("assignedTo")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+    const totalPages = Math.ceil(totalLicenses / limit);
+
+    const statFilter = softwareModelId ? { softwareModelId: filter.softwareModelId } : {};
+    const stats = {
+        total: await IndividualSoftware.countDocuments(statFilter),
+        available: await IndividualSoftware.countDocuments({ ...statFilter, status: "Available" }),
+        assigned: await IndividualSoftware.countDocuments({ ...statFilter, status: "Assigned" }),
+        expired: await IndividualSoftware.countDocuments({ ...statFilter, status: "Expired" }),
+        expiringSoon: await IndividualSoftware.countDocuments({
+            ...statFilter,
+            expiryDate: {
+                $gt: new Date(),
+                $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+            }
+        })
+    };
+
+    return {
+        existingSoftware,
+        totalPages,
+        currentPage: page,
+        stats
+    };
+}
+
+// READ a single license by ID
+const getOneSoftware = async (softwareId) => {
+    const singleSoftware = await IndividualSoftware.findById(softwareId).populate("softwareModelId");
+    if (singleSoftware == null) {
+        throw new Error("No specific license found in the inventory.");
     }
     return singleSoftware;   
 }
 
-// Delete Software
-const removeSoftware=async(softwareId)=>{
-    const deleteSoftware=await Software.deleteOne({_id:softwareId});
-    if(deleteSoftware.deletedCount === 0){
-        throw new Error("No software found for delete");
+// Delete license
+const removeSoftware = async (softwareId) => {
+    const license = await IndividualSoftware.findById(softwareId);
+    if (!license) {
+        throw new Error("No license found for delete");
     }
-    return deleteSoftware;
+
+    const modelId = license.softwareModelId;
+    const status = license.status;
+
+    const deleteResult = await IndividualSoftware.deleteOne({ _id: softwareId });
+    if (deleteResult.deletedCount > 0) {
+        // Update Software model counts
+        const software = await Software.findById(modelId);
+        if (software) {
+            software.totalLicenses = Math.max(0, (software.totalLicenses || 0) - 1);
+            if (status === "Assigned") {
+                software.usedLicenses = Math.max(0, (software.usedLicenses || 0) - 1);
+            }
+            await software.save();
+        }
+    }
+    return deleteResult;
 }
-// Update software
-const modifySoftware=async(softwareId,data)=>{
-    const updated=await Software.findByIdAndUpdate(softwareId,data ,{
+
+// Update license
+const modifySoftware = async (softwareId, data) => {
+    const oldLicense = await IndividualSoftware.findById(softwareId);
+    if (!oldLicense) {
+        throw new Error("No license found for update");
+    }
+
+    const oldStatus = oldLicense.status;
+    const newStatus = data.status;
+
+    const updated = await IndividualSoftware.findByIdAndUpdate(softwareId, data, {
       new: true,
       runValidators: true
     });
-    if(!updated){
-        throw new Error("No software found for update");
+
+    if (updated) {
+        // Sync with Software model if status changed
+        if (newStatus && oldStatus !== newStatus) {
+            const software = await Software.findById(updated.softwareModelId);
+            if (software) {
+                // Decrement old
+                if (oldStatus === "Assigned") {
+                    software.usedLicenses = Math.max(0, (software.usedLicenses || 0) - 1);
+                }
+                // Increment new
+                if (newStatus === "Assigned") {
+                    software.usedLicenses = (software.usedLicenses || 0) + 1;
+                }
+                await software.save();
+            }
+        }
+        
+        // Immediate check for notification on update
+        await checkAndNotify(updated);
     }
+
     return updated;
 }
 
-// module.exports={createSoftware,getSoftware,getOneSoftware,removeSoftware,modifySoftware};
-module.exports={createSoftware,getSoftware,getOneSoftware,removeSoftware,modifySoftware};
+module.exports = { createSoftware, getSoftware, getOneSoftware, removeSoftware, modifySoftware };

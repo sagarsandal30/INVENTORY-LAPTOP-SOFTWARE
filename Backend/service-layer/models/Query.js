@@ -42,8 +42,8 @@ const querySchema = new mongoose.Schema(
     },
     priority: {
       type: String,
-      enum: ["Low", "Critical", "High","info"],
-      default: "info",
+      enum: ["Low", "Medium", "High", "Critical"],
+      default: "Medium",
     },
     status: {
       type: String,

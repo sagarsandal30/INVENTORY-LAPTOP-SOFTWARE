@@ -36,7 +36,7 @@ const assignmentSchema=new mongoose.Schema(
    
     softwareAssetId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Software",
+      ref: "IndividualSoftware",
       default: null
     },
     assignDate: {

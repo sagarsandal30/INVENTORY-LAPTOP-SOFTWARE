@@ -26,11 +26,11 @@ default: null
 },
   expiryDate: {
       type: Date,
-      required: true
     },
   renewalStatus:{
   type: String,
-  enum: ["Active", "Expiring Soon", "Expired"],
+  enum: ["Active", "Expiring Soon", "Critical", "Expired"],
+  default: "Active"
 }
 },
 {
