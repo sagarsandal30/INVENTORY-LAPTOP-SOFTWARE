@@ -10,7 +10,7 @@ import Software from "./pages/SoftwarePage/Software";
 import Notification from "./pages/NotificationPage/Notification";
 import Employees from "./pages/EmployeesPage/Employees";
 import Assignments from "./pages/AssignmentsPage/Assignments";
-import SignUp from "./components/signUp/SignUp.jsx"
+import SignUp from "./components/signUp/SignUp"
 import Report from "./pages/ReportsPage/Report";
 import Settings from "./pages/SettingsPage/Settings";
 import LaptopAssets from "./pages/PhysicalLaptop/LaptopAssets";
