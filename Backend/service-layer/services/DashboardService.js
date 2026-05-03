@@ -4,14 +4,16 @@ const Employee = require("../models/Employee");
 const LaptopAsset = require("../models/Laptop");
 const LaptopModel = require("../models/LaptopModel");
 const mongoose = require("mongoose");
-const {redisClient}=require("../../Config/redisClient")
+const {getRedisClient }=require("../../Config/redisClient")
 
  const  showDashboardData= async()=>{
+  const redisClient = getRedisClient();
 
    const cacheKey = "dashboard:data";
    // 1. Check Redis first
-   const cachedData = await redisClient.get(cacheKey);
-
+  if (redisClient && redisClient.isOpen) {
+    const cachedData = await redisClient.get(cacheKey);
+  }
  if (cachedData) {
     console.log("Dashboard data from Redis");
     return JSON.parse(cachedData);
