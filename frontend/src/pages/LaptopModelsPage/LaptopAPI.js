@@ -15,7 +15,7 @@ const getConfig = () => {
 export const createLaptopModel = async (laptopModelData) => {
   try {
     const result = await axios.post(
-      `${BASE_URL}/${APIRoutes.LAPTOPMODEL}`,
+      `${BASE_URL}${APIRoutes.LAPTOPMODEL}`,
       laptopModelData,
       getConfig()
     );
@@ -28,7 +28,7 @@ export const createLaptopModel = async (laptopModelData) => {
 export const getLaptopModels = async (page, limit, search) => {
   try {
     const result = await axios.get(
-      `${BASE_URL}/${APIRoutes.LAPTOPMODEL}`,
+      `${BASE_URL}${APIRoutes.LAPTOPMODEL}`,
       {
         ...getConfig(),
         params: { page, limit, search }
@@ -42,7 +42,7 @@ export const getLaptopModels = async (page, limit, search) => {
 export const getLaptopModelById = async (laptopModelId) => {
   try {
     const result = await axios.get(
-      `${BASE_URL}/${APIRoutes.LAPTOPMODEL}/${laptopModelId}`,
+      `${BASE_URL}${APIRoutes.LAPTOPMODEL}/${laptopModelId}`,
       getConfig()
     );
     return result.data;
@@ -53,7 +53,7 @@ export const getLaptopModelById = async (laptopModelId) => {
 export const deleteLaptopModelById = async (laptopModelId) => {
   try {
     const result = await axios.delete(
-      `${BASE_URL}/${APIRoutes.LAPTOPMODEL}/${laptopModelId}`,
+      `${BASE_URL}${APIRoutes.LAPTOPMODEL}/${laptopModelId}`,
       getConfig()
     );
     return result.data;
@@ -66,7 +66,7 @@ export const deleteLaptopModelById = async (laptopModelId) => {
 export const updateLaptopModelById = async (laptopModelId, laptopModelData) => {
   try {
     const result = await axios.put(
-      `${BASE_URL}/${APIRoutes.LAPTOPMODEL}/${laptopModelId}`,
+      `${BASE_URL}${APIRoutes.LAPTOPMODEL}/${laptopModelId}`,
       laptopModelData,
       getConfig()
     );
