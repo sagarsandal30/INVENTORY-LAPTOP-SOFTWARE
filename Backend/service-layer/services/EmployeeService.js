@@ -1,6 +1,6 @@
 const Employee = require("../models/Employee");
 const mongoose = require("mongoose");
-const {redisClient}=require("../../Config/redisClient")
+const {getRedisClient}=require("../../Config/redisClient")
 
 // Clear all employee list cache keys
 const clearEmployeeListCache = async () => {
@@ -40,6 +40,7 @@ const createEmployee = async (employeeData) => {
 
 // GET All Employees
 const getAllEmployee = async (page,limit,search,status) => {
+   const redisClient = getRedisClient();
   const skip = (page - 1) * limit;
 
   const query={};
@@ -58,7 +59,9 @@ const getAllEmployee = async (page,limit,search,status) => {
     query.status=status;
   }
 
+  
   const cacheKey = `employee:list:page=${page}:limit=${limit}:search=${search}:status=${status}`;
+   if (redisClient && redisClient.isOpen) {
   const cachedData = await redisClient.get(cacheKey);
    if(!cachedData){
     console.log("Employee list from MongoDB");
@@ -67,6 +70,7 @@ const getAllEmployee = async (page,limit,search,status) => {
     console.log("Employee list from Redis");
     return JSON.parse(cachedData);
   }
+}
 
 const totalEmployees= await Employee.countDocuments();
 console.log(totalEmployees);
