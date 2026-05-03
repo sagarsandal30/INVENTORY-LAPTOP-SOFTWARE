@@ -12,6 +12,8 @@ const connectRedis = async () => {
 
     redisClient = createClient({
       url: process.env.REDIS_URL,
+       tls: true,
+    rejectUnauthorized: false
     });
 
     redisClient.on("error", (err) => {
