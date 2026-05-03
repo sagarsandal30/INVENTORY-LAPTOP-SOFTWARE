@@ -22,9 +22,10 @@ const createTransporter = () => {
 // Priority badge colours (inline HTML)
 // ---------------------------------------------------------------------------
 const priorityColor = {
-  High:   "#ef4444",
-  Medium: "#f59e0b",
-  Low:    "#22c55e",
+  High:     "#ef4444",
+  Critical: "#b91c1c",
+  Medium:   "#f59e0b",
+  Low:      "#22c55e",
 };
 
 const statusColor = {
@@ -244,7 +245,7 @@ const sendQueryNotificationEmail = async (query) => {
     }
 
     const mailOptions = {
-      from: `"InventoryHub " <${process.env.SMTP_USER}>`,
+      from: `"InventoryHub" <${process.env.SMTP_USER}>`,
       to: itOperationEmail,
       cc: process.env.IT_TEAM_EMAIL || undefined,
       subject: `[InventoryHub] New Query: ${query.queryType} — ${query.priority} Priority`,
@@ -323,7 +324,61 @@ const sendQueryConfirmationEmail = async (query) => {
   }
 };
 
+// ---------------------------------------------------------------------------
+// Send email when query status is updated (Resolved/Rejected/In Progress)
+// ---------------------------------------------------------------------------
+const sendQueryStatusUpdateEmail = async (query) => {
+  try {
+    const transporter = createTransporter();
+    const sColor = statusColor[query.status] || "#6b7280";
+
+    const mailOptions = {
+      from: `"InventoryHub Support" <${process.env.SMTP_USER}>`,
+      to: query.employeeEmail,
+      subject: `[InventoryHub] Query Status Updated: ${query.status} — #${query._id?.toString().slice(-6).toUpperCase()}`,
+      html: `
+<div style="font-family:'Segoe UI',sans-serif;max-width:520px;margin:0 auto;
+            padding:32px 24px;background:#ffffff;border-radius:12px;
+            box-shadow:0 2px 12px rgba(0,0,0,0.06); border-top: 4px solid ${sColor};">
+  <h2 style="color:#1e3a5f;margin:0 0 8px;">Query Update: ${query.status}</h2>
+  <p style="color:#4b5563;margin:0 0 24px;font-size:14px;">
+    Hi <strong>${query.employeeName}</strong>, your query status has been updated.
+  </p>
+  
+  <div style="background:#f8fafc;border-radius:8px;padding:20px;margin-bottom:24px;border:1px solid #e2e8f0;">
+    <p style="margin:0 0 10px;font-size:13px;color:#64748b;">
+      <strong style="color:#334155;">Query:</strong> ${query.subject}
+    </p>
+    <p style="margin:0 0 10px;font-size:13px;color:#64748b;">
+      <strong style="color:#334155;">Status:</strong> 
+      <span style="color:${sColor};font-weight:700;">${query.status}</span>
+    </p>
+    ${query.responseMessage ? `
+    <div style="margin-top:15px;padding-top:15px;border-top:1px solid #e2e8f0;">
+      <p style="margin:0 0 5px;font-size:13px;color:#334155;font-weight:700;">IT Response:</p>
+      <p style="margin:0;font-size:13px;color:#475569;line-height:1.6;">${query.responseMessage}</p>
+    </div>` : ""}
+  </div>
+
+  <p style="color:#9ca3af;font-size:12px;margin:0;text-align:center;">
+    InventoryHub · IT Asset Management
+  </p>
+</div>
+      `,
+      text: `Hi ${query.employeeName}, your query "${query.subject}" has been updated to: ${query.status}.${query.responseMessage ? `\n\nIT Response: ${query.responseMessage}` : ""}`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`[Email] Status update sent to ${query.employeeEmail} (${query.status})`);
+    return { success: true };
+  } catch (err) {
+    console.warn("[Email] Status update email failed:", err.message);
+    return { success: false, error: err.message };
+  }
+};
+
 module.exports = {
   sendQueryNotificationEmail,
   sendQueryConfirmationEmail,
+  sendQueryStatusUpdateEmail,
 };

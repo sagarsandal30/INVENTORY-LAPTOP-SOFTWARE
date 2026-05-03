@@ -12,8 +12,10 @@ const {
 const createQuery = async (data,params) => {
   const userId = params.id;
   const user = await User.findById(userId).select("-password -confirmPassword");
-  if(!user){
+  if (!user) {
     const err = new Error("User not found.");
+    err.statusCode = 404;
+    throw err;
   }
   
 const{queryType,subject,description,priority}=data;
@@ -172,6 +174,10 @@ const updateQuery = async ({ queryId, updates }) => {
     err.statusCode = 404;
     throw err;
   }
+
+  // Fire-and-forget email notification to employee
+  const { sendQueryStatusUpdateEmail } = require("./EmailService");
+  sendQueryStatusUpdateEmail(query).catch(() => {});
 
   return query;
 };
