@@ -1,51 +1,71 @@
 const Employee = require("../models/Employee");
 const mongoose = require("mongoose");
-const {getRedisClient}=require("../../Config/redisClient")
+const { getRedisClient } = require("../../Config/redisClient");
 
-// Clear all employee list cache keys
+// =============================
+// 🔹 Clear Cache
+// =============================
 const clearEmployeeListCache = async () => {
-  const keys = await redisClient.keys("employee:list:*");
+  const redisClient = getRedisClient();
+
+  if (!redisClient || !redisClient.isOpen) return;
+
+  const keys = [];
+
+  for await (const key of redisClient.scanIterator({
+    MATCH: "employee:list:*",
+    COUNT: 100,
+  })) {
+    keys.push(key);
+  }
 
   if (keys.length > 0) {
     await redisClient.del(keys);
   }
 };
 
+const clearCommonCache = async () => {
+  const redisClient = getRedisClient();
 
-// CREATE Employee
+  if (!redisClient || !redisClient.isOpen) return;
+
+  await redisClient.del("dashboard:data");
+  await clearEmployeeListCache();
+};
+
+// =============================
+// 🔹 CREATE Employee
+// =============================
 const createEmployee = async (employeeData) => {
-  // Check if employee with same email already exists (safety for auto-creation)
-  const existingEmployeeByEmail = await Employee.findOne({
-    email: employeeData.email
+  const existingEmployee = await Employee.findOne({
+    email: employeeData.email,
   });
 
-  if (existingEmployeeByEmail) {
-    // If it already exists and we are trying to link a user, update the userId
-    if (employeeData.userId && !existingEmployeeByEmail.userId) {
-      existingEmployeeByEmail.userId = employeeData.userId;
-      await existingEmployeeByEmail.save();
-      return existingEmployeeByEmail;
+  if (existingEmployee) {
+    if (employeeData.userId && !existingEmployee.userId) {
+      existingEmployee.userId = employeeData.userId;
+      await existingEmployee.save();
+      return existingEmployee;
     }
-    return existingEmployeeByEmail; // Return existing one instead of throwing if it's an auto-call
+    return existingEmployee;
   }
 
   const employee = await Employee.create(employeeData);
-  
-  // clear cache
-  await redisClient.del("dashboard:data");
-  await clearEmployeeListCache();
-  
+
+  await clearCommonCache();
+
   return employee;
 };
 
-// GET All Employees
-const getAllEmployee = async (page,limit,search,status) => {
-   const redisClient = getRedisClient();
+// =============================
+// 🔹 GET All Employees
+// =============================
+const getAllEmployee = async (page, limit, search, status) => {
+  const redisClient = getRedisClient();
   const skip = (page - 1) * limit;
 
-  const query={};
+  const query = {};
 
-  // Search by fullName OR email OR department
   if (search && search.trim() !== "") {
     query.$or = [
       { fullName: { $regex: search, $options: "i" } },
@@ -54,135 +74,158 @@ const getAllEmployee = async (page,limit,search,status) => {
     ];
   }
 
-  //Filter By Status
-  if(status&&status!=="All"){
-    query.status=status;
+  if (status && status !== "All") {
+    query.status = status;
   }
 
-  
   const cacheKey = `employee:list:page=${page}:limit=${limit}:search=${search}:status=${status}`;
-   if (redisClient && redisClient.isOpen) {
-  const cachedData = await redisClient.get(cacheKey);
-   if(!cachedData){
-    console.log("Employee list from MongoDB");
-   }
-    if (cachedData) {
-    console.log("Employee list from Redis");
-    return JSON.parse(cachedData);
-  }
-}
 
-const totalEmployees= await Employee.countDocuments();
-console.log(totalEmployees);
-  const employees = await Employee.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit);
-  const totalPages=Math.ceil(totalEmployees/limit);
-  const active=await Employee.countDocuments({status:"Active"});
-    const inActive=await Employee.countDocuments({status:"Inactive"});
-    const assetInfo=await Employee.aggregate([
-      {
-        $group:{
-          _id:null,
-          totalLaptops:{$sum:"$laptopAssigned"},
-          totalSoftware:{$sum:"$softwareAssigned"}
-        }
-      }
-    ]);
-    
-const result= {
-  employees,
-   stats:{
-    totalEmployees:totalEmployees,
-    active:active,
-    inactive:inActive,
-    totalLaptops:assetInfo[0]?.totalLaptops,
-    totalSoftware:assetInfo[0]?.totalSoftware
-},
-totalPages,
-currentPage:page
-}
-  await redisClient.setEx(cacheKey,60,JSON.stringify(result));
+  // 🔥 CACHE READ
+  if (redisClient && redisClient.isOpen) {
+    const cachedData = await redisClient.get(cacheKey);
+
+    if (cachedData) {
+      console.log("⚡ Employee from Redis");
+      return JSON.parse(cachedData);
+    }
+  }
+
+  console.log("🧠 Employee from MongoDB");
+
+  const totalEmployees = await Employee.countDocuments();
+
+  const employees = await Employee.find(query)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const totalPages = Math.ceil(totalEmployees / limit);
+
+  const active = await Employee.countDocuments({ status: "Active" });
+  const inActive = await Employee.countDocuments({ status: "Inactive" });
+
+  const assetInfo = await Employee.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalLaptops: { $sum: "$laptopAssigned" },
+        totalSoftware: { $sum: "$softwareAssigned" },
+      },
+    },
+  ]);
+
+  const result = {
+    employees,
+    stats: {
+      totalEmployees,
+      active,
+      inactive: inActive,
+      totalLaptops: assetInfo[0]?.totalLaptops || 0,
+      totalSoftware: assetInfo[0]?.totalSoftware || 0,
+    },
+    totalPages,
+    currentPage: page,
+  };
+
+  // 🔥 CACHE SAVE
+  if (redisClient && redisClient.isOpen) {
+    await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
+  }
+
   return result;
-    
 };
 
-// GET One Employee by ID
-const getOneEmployee = async (employeeMongoId) => {
-  if (!mongoose.Types.ObjectId.isValid(employeeMongoId)) {
-    throw new Error("Invalid employee ID.");
+// =============================
+// 🔹 GET One Employee
+// =============================
+const getOneEmployee = async (id) => {
+  const redisClient = getRedisClient();
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new Error("Invalid employee ID");
   }
 
-  const cacheKey = `employee:${employeeMongoId}`;
-    const cachedEmployee = await redisClient.get(cacheKey);
-if (cachedEmployee) {
-    console.log("Single employee from Redis");
-    return JSON.parse(cachedEmployee);
+  const cacheKey = `employee:${id}`;
+
+  if (redisClient && redisClient.isOpen) {
+    const cached = await redisClient.get(cacheKey);
+
+    if (cached) {
+      console.log("⚡ Single Employee from Redis");
+      return JSON.parse(cached);
+    }
   }
 
-
-
-  const employee = await Employee.findById(employeeMongoId);
+  const employee = await Employee.findById(id);
 
   if (!employee) {
-    throw new Error("Employee not found.");
+    throw new Error("Employee not found");
   }
-await redisClient.setEx(cacheKey,60,JSON.stringify(employee));
+
+  if (redisClient && redisClient.isOpen) {
+    await redisClient.setEx(cacheKey, 60, JSON.stringify(employee));
+  }
+
   return employee;
 };
 
-// UPDATE Employee
-const updateEmployee = async (employeeMongoId, updateData) => {
-  if (!mongoose.Types.ObjectId.isValid(employeeMongoId)) {
-    throw new Error("Invalid employee ID.");
+// =============================
+// 🔹 UPDATE Employee
+// =============================
+const updateEmployee = async (id, data) => {
+  const redisClient = getRedisClient();
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new Error("Invalid employee ID");
   }
 
-  const updatedEmployee = await Employee.findByIdAndUpdate(
-    employeeMongoId,
-    updateData,
-    {
-      new: true,
-      runValidators: true
-    }
-  );
-    await redisClient.del("dashboard:data");
-  await redisClient.del(`employee:${employeeMongoId}`);
-    await clearEmployeeListCache();
+  const updated = await Employee.findByIdAndUpdate(id, data, {
+    new: true,
+    runValidators: true,
+  });
 
-  if (!updatedEmployee) {
-    throw new Error("Employee not found.");
+  if (!updated) {
+    throw new Error("Employee not found");
   }
 
-  return updatedEmployee;
+  if (redisClient && redisClient.isOpen) {
+    await redisClient.del(`employee:${id}`);
+  }
+
+  await clearCommonCache();
+
+  return updated;
 };
 
-// DELETE Employee
-const deleteEmployee = async (employeeMongoId) => {
+// =============================
+// 🔹 DELETE Employee
+// =============================
+const deleteEmployee = async (id) => {
+  const redisClient = getRedisClient();
 
-
-  if (!mongoose.Types.ObjectId.isValid(employeeMongoId)) {
-    throw new Error("Invalid employee ID.");
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new Error("Invalid employee ID");
   }
 
-  const deletedEmployee = await Employee.findByIdAndDelete(employeeMongoId);
+  const deleted = await Employee.findByIdAndDelete(id);
 
-    // 🔥 clear cache here
-    await redisClient.del("dashboard:data");
-  await redisClient.del(`employee:${employeeMongoId}`);
-    await clearEmployeeListCache();
-
-  if (!deletedEmployee) {
-    throw new Error("Employee not found.");
+  if (!deleted) {
+    throw new Error("Employee not found");
   }
 
-  return deletedEmployee;
+  if (redisClient && redisClient.isOpen) {
+    await redisClient.del(`employee:${id}`);
+  }
+
+  await clearCommonCache();
+
+  return deleted;
 };
 
-   
-
-module.exports ={
-    createEmployee,
-    getAllEmployee,
-    getOneEmployee,
-    updateEmployee,
-    deleteEmployee,
-      
+module.exports = {
+  createEmployee,
+  getAllEmployee,
+  getOneEmployee,
+  updateEmployee,
+  deleteEmployee,
 };

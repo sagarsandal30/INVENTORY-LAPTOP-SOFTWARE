@@ -1,56 +1,71 @@
 const LaptopAsset = require("../models/Laptop");
 const LaptopModel = require("../models/LaptopModel");
-const Notification = require("../models/Notification"); // Added
-const { redisClient } = require("../../Config/redisClient");
+const Notification = require("../models/Notification");
+const { getRedisClient } = require("../../Config/redisClient");
 
-// Clear all Laptop Model list cache keys
 const clearLaptopModelCache = async () => {
-  const keys = await redisClient.keys("laptopModel:list:*");
-  if (keys.length > 0) {
-    await redisClient.del(keys);
+  const redisClient = getRedisClient();
+
+  if (redisClient && redisClient.isOpen) {
+    const keys = await redisClient.keys("laptopModel:list:*");
+
+    if (keys.length > 0) {
+      await redisClient.del(keys);
+    }
   }
 };
 
-// Helper for Laptop Lifecycle
+const clearCommonCache = async () => {
+  const redisClient = getRedisClient();
+
+  if (redisClient && redisClient.isOpen) {
+    await redisClient.del("dashboard:data");
+    await clearLaptopModelCache();
+  }
+};
+
 const checkLaptopLife = async (laptop) => {
   const now = new Date();
   const startDate = laptop.purchaseDate || laptop.createdAt || now;
-  const ageInMonths = Math.floor((now - startDate) / (1000 * 60 * 60 * 24 * 30.44));
+  const ageInMonths = Math.floor(
+    (now - startDate) / (1000 * 60 * 60 * 24 * 30.44)
+  );
 
   if (ageInMonths >= 33 && !laptop.isNearEOL) {
     laptop.isNearEOL = true;
     await laptop.save();
 
-    // Create Notification
     await Notification.create({
       title: "Laptop Nearing End-of-Life",
-      message: `Asset ${laptop.serialNumber} (${laptop.modelName || 'Laptop'}) is ${ageInMonths} months old and requires replacement planning.`,
+      message: `Asset ${laptop.serialNumber} (${laptop.modelName || "Laptop"}) is ${ageInMonths} months old and requires replacement planning.`,
       type: "Warning",
       category: "Laptop",
       relatedModel: "Laptop",
       relatedId: laptop._id,
-      targetRole: "IT Operations"
+      targetRole: "IT Operations",
     });
   }
 };
 
-// CREATE a new Laptop Asset
 const createLaptop = async (laptopData) => {
-  const existingLaptop = await LaptopAsset.findOne({ serialNumber: laptopData.serialNumber });
+  const existingLaptop = await LaptopAsset.findOne({
+    serialNumber: laptopData.serialNumber,
+  });
+
   if (existingLaptop) {
     throw new Error("A laptop with this serial number already exists.");
   }
-  
+
   const laptop = new LaptopAsset(laptopData);
   await laptop.save();
 
-  // Check lifecycle immediately
   await checkLaptopLife(laptop);
 
-  // Update LaptopModel counts
   const laptopModel = await LaptopModel.findById(laptop.laptopModelId);
+
   if (laptopModel) {
     laptopModel.totalAssets = (laptopModel.totalAssets || 0) + 1;
+
     if (laptop.status === "Available" || laptop.status === "Avaliable") {
       laptopModel.avaliable = (laptopModel.avaliable || 0) + 1;
     } else if (laptop.status === "Assigned") {
@@ -60,18 +75,25 @@ const createLaptop = async (laptopData) => {
     } else if (laptop.status === "Retired") {
       laptopModel.retired = (laptopModel.retired || 0) + 1;
     }
+
     await laptopModel.save();
   }
 
-  await redisClient.del("Dashboard:data");
-  await clearLaptopModelCache();
+  await clearCommonCache();
 
   return laptop;
 };
 
-// Read laptops
-const getLaptop = async (page, limit, modelId, search, statusFilter, conditionFilter) => {
+const getLaptop = async (
+  page,
+  limit,
+  modelId,
+  search,
+  statusFilter,
+  conditionFilter
+) => {
   const skip = (page - 1) * limit;
+
   const filter = {};
 
   if (search && search.trim() !== "") {
@@ -81,82 +103,127 @@ const getLaptop = async (page, limit, modelId, search, statusFilter, conditionFi
   if (statusFilter && statusFilter !== "All") {
     filter.status = statusFilter;
   }
+
   if (conditionFilter && conditionFilter !== "All") {
     filter.condition = conditionFilter;
   }
 
+  const modelFilter = modelId ? { ...filter, laptopModelId: modelId } : filter;
+
   const allLaptopAssets = await LaptopAsset.find();
-  const existingLaptopAssets = await LaptopAsset.find({ ...filter, laptopModelId: modelId })
+
+  const existingLaptopAssets = await LaptopAsset.find(modelFilter)
+    .populate("laptopModelId", "modelName brand")
     .sort({ createdAt: 1 })
     .skip(skip)
     .limit(limit);
 
-  const totalAssets = await LaptopAsset.countDocuments({ laptopModelId: modelId });
+  const totalAssets = await LaptopAsset.countDocuments(
+    modelId ? { laptopModelId: modelId } : {}
+  );
+
   const totalPages = Math.ceil(totalAssets / limit);
+
+  const statsFilter = modelId ? { laptopModelId: modelId } : {};
 
   const stats = {
     total: totalAssets,
-    avaliable: await LaptopAsset.countDocuments({ laptopModelId: modelId, status: { $in: ["Available", "Avaliable"] } }),
-    assigned: await LaptopAsset.countDocuments({ laptopModelId: modelId, status: "Assigned" }),
-    repair: await LaptopAsset.countDocuments({ laptopModelId: modelId, status: "Under Repair" }),
-    retired: await LaptopAsset.countDocuments({ laptopModelId: modelId, status: "Retired" }),
-    damaged: await LaptopAsset.countDocuments({ laptopModelId: modelId, condition: "Damaged" })
+    avaliable: await LaptopAsset.countDocuments({
+      ...statsFilter,
+      status: { $in: ["Available", "Avaliable"] },
+    }),
+    assigned: await LaptopAsset.countDocuments({
+      ...statsFilter,
+      status: "Assigned",
+    }),
+    repair: await LaptopAsset.countDocuments({
+      ...statsFilter,
+      status: "Under Repair",
+    }),
+    retired: await LaptopAsset.countDocuments({
+      ...statsFilter,
+      status: "Retired",
+    }),
+    damaged: await LaptopAsset.countDocuments({
+      ...statsFilter,
+      condition: "Damaged",
+    }),
   };
 
-  const modelName = existingLaptopAssets[0]?.laptopModelId?.modelName || "";
+  const modelName =
+    existingLaptopAssets[0]?.laptopModelId?.modelName || "";
 
   return {
     allLaptopAssets,
     existingLaptopAssets,
     modelName,
     totalPages,
-    stats
+    stats,
   };
 };
 
-// READ a single Laptop by ID
 const getOneLaptop = async (laptopId) => {
-  const singleLaptop = await LaptopAsset.findOne({ _id: laptopId });
+  const singleLaptop = await LaptopAsset.findById(laptopId).populate(
+    "laptopModelId",
+    "modelName brand"
+  );
+
   if (!singleLaptop) {
     throw new Error("No specific laptop found in the inventory.");
   }
+
   return singleLaptop;
 };
 
 const removeLaptop = async (laptopId) => {
   const laptop = await LaptopAsset.findById(laptopId);
+
   if (!laptop) {
     throw new Error("No laptop found for delete");
   }
 
   const modelId = laptop.laptopModelId;
   const status = laptop.status;
+
   const deleteResult = await LaptopAsset.deleteOne({ _id: laptopId });
 
   if (deleteResult.deletedCount > 0) {
     const laptopModel = await LaptopModel.findById(modelId);
+
     if (laptopModel) {
-      laptopModel.totalAssets = Math.max(0, (laptopModel.totalAssets || 0) - 1);
+      laptopModel.totalAssets = Math.max(
+        0,
+        (laptopModel.totalAssets || 0) - 1
+      );
+
       if (status === "Available" || status === "Avaliable") {
-        laptopModel.avaliable = Math.max(0, (laptopModel.avaliable || 0) - 1);
+        laptopModel.avaliable = Math.max(
+          0,
+          (laptopModel.avaliable || 0) - 1
+        );
       } else if (status === "Assigned") {
         laptopModel.inUse = Math.max(0, (laptopModel.inUse || 0) - 1);
       } else if (status === "Under Repair") {
-        laptopModel.underRepair = Math.max(0, (laptopModel.underRepair || 0) - 1);
+        laptopModel.underRepair = Math.max(
+          0,
+          (laptopModel.underRepair || 0) - 1
+        );
       } else if (status === "Retired") {
         laptopModel.retired = Math.max(0, (laptopModel.retired || 0) - 1);
       }
+
       await laptopModel.save();
     }
   }
 
-  await redisClient.del("Dashboard:data");
-  await clearLaptopModelCache();
+  await clearCommonCache();
+
   return deleteResult;
 };
 
 const modifyLaptop = async (laptopId, data) => {
   const oldLaptop = await LaptopAsset.findById(laptopId);
+
   if (!oldLaptop) {
     throw new Error("No laptop found for update");
   }
@@ -170,24 +237,28 @@ const modifyLaptop = async (laptopId, data) => {
   });
 
   if (updated) {
-    // Check lifecycle immediately on update
     await checkLaptopLife(updated);
 
     if (newStatus && oldStatus !== newStatus) {
       const laptopModel = await LaptopModel.findById(updated.laptopModelId);
+
       if (laptopModel) {
-        // Decrement old status
         if (oldStatus === "Available" || oldStatus === "Avaliable") {
-          laptopModel.avaliable = Math.max(0, (laptopModel.avaliable || 0) - 1);
+          laptopModel.avaliable = Math.max(
+            0,
+            (laptopModel.avaliable || 0) - 1
+          );
         } else if (oldStatus === "Assigned") {
           laptopModel.inUse = Math.max(0, (laptopModel.inUse || 0) - 1);
         } else if (oldStatus === "Under Repair") {
-          laptopModel.underRepair = Math.max(0, (laptopModel.underRepair || 0) - 1);
+          laptopModel.underRepair = Math.max(
+            0,
+            (laptopModel.underRepair || 0) - 1
+          );
         } else if (oldStatus === "Retired") {
           laptopModel.retired = Math.max(0, (laptopModel.retired || 0) - 1);
         }
 
-        // Increment new status
         if (newStatus === "Available" || newStatus === "Avaliable") {
           laptopModel.avaliable = (laptopModel.avaliable || 0) + 1;
         } else if (newStatus === "Assigned") {
@@ -197,13 +268,14 @@ const modifyLaptop = async (laptopId, data) => {
         } else if (newStatus === "Retired") {
           laptopModel.retired = (laptopModel.retired || 0) + 1;
         }
+
         await laptopModel.save();
       }
     }
   }
 
-  await redisClient.del("Dashboard:data");
-  await clearLaptopModelCache();
+  await clearCommonCache();
+
   return updated;
 };
 
@@ -213,4 +285,4 @@ module.exports = {
   getOneLaptop,
   removeLaptop,
   modifyLaptop,
-};
+};

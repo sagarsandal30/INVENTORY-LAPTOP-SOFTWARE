@@ -8,12 +8,19 @@ const { getRedisClient } = require("../../Config/redisClient");
 const clearLaptopModelCache = async () => {
   const redisClient = getRedisClient();
 
-  if (redisClient && redisClient.isOpen) {
-    const keys = await redisClient.keys("laptopModel:list:*");
+  if (!redisClient || !redisClient.isOpen) return;
 
-    if (keys.length > 0) {
-      await redisClient.del(keys);
-    }
+  const keys = [];
+
+  for await (const key of redisClient.scanIterator({
+    MATCH: "laptopModel:list:*",
+    COUNT: 100,
+  })) {
+    keys.push(key);
+  }
+
+  if (keys.length > 0) {
+    await redisClient.del(keys);
   }
 };
 

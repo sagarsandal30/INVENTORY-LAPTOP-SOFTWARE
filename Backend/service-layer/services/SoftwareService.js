@@ -1,203 +1,179 @@
 const Software = require("../models/Software");
 const IndividualSoftware = require("../models/IndividualSoftware");
-const {redisClient}=require("../../Config/redisClient");
+const { getRedisClient } = require("../../Config/redisClient");
 
-
-// Clear all Laptop Model list cache keys
+// =============================
+// 🔹 Clear Cache
+// =============================
 const clearSoftwareCache = async () => {
-  const keys = await redisClient.keys("software:list:*");
+  const redisClient = getRedisClient();
 
-  if (keys.length > 0) {
-    await redisClient.del(keys);
+  if (redisClient && redisClient.isOpen) {
+    const keys = [];
+
+    for await (const key of redisClient.scanIterator({
+      MATCH: "software:list:*",
+      COUNT: 100,
+    })) {
+      keys.push(key);
+    }
+
+    if (keys.length > 0) {
+      await redisClient.del(keys);
+    }
   }
 };
 
-// CREATE a new Software
+// =============================
+// 🔹 CREATE Software
+// =============================
 const createSoftware = async (softwareData) => {
-    console.log("Creating Software with data:", softwareData);
-    const totalLicenses = parseInt(softwareData.totalLicenses) || 0;
-    softwareData.usedLicenses = 0;
+  const redisClient = getRedisClient();
 
-    const software = new Software(softwareData);
-    await software.save();
-    console.log("Software Model saved successfully:", software._id);
+  const totalLicenses = parseInt(softwareData.totalLicenses) || 0;
+  softwareData.usedLicenses = 0;
 
-    // Automatically generate individual software licenses
-    if (totalLicenses > 0) {
-        console.log(`Generating ${totalLicenses} licenses for software ${software.softwareName}`);
-        const licenses = [];
-        const vendorPrefix = (software.vendor || "UNK").substring(0, 3).toUpperCase();
-        const softwarePrefix = (software.softwareName || "SW").substring(0, 3).toUpperCase();
-        const timestamp = Date.now().toString().slice(-4);
+  const software = new Software(softwareData);
+  await software.save();
 
-        for (let i = 1; i <= totalLicenses; i++) {
-            licenses.push({
-                softwareModelId: software._id,
-                licenseKey: `${vendorPrefix}-${softwarePrefix}-KEY-${timestamp}-${String(i).padStart(3, '0')}`,
-                status: "Available",
-                expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), 
-                renewalStatus: "Active"
-            });
-        }
-        
-        try {
-            const inserted = await IndividualSoftware.insertMany(licenses);
-            console.log(`Successfully inserted ${inserted.length} individual software records`);
-        } catch (err) {
-            console.error("CRITICAL ERROR generating individual software:", err.message);
-        }
-    } else {
-        console.warn("totalLicenses is 0 or invalid, skipping individual license generation.");
+  if (totalLicenses > 0) {
+    const licenses = [];
+    const vendorPrefix = (software.vendor || "UNK").substring(0, 3).toUpperCase();
+    const softwarePrefix = (software.softwareName || "SW").substring(0, 3).toUpperCase();
+    const timestamp = Date.now().toString().slice(-4);
+
+    for (let i = 1; i <= totalLicenses; i++) {
+      licenses.push({
+        softwareModelId: software._id,
+        licenseKey: `${vendorPrefix}-${softwarePrefix}-KEY-${timestamp}-${String(i).padStart(3, '0')}`,
+        status: "Available",
+        expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        renewalStatus: "Active"
+      });
     }
 
+    await IndividualSoftware.insertMany(licenses);
+  }
+
+  if (redisClient && redisClient.isOpen) {
     await redisClient.del("dashboard:data");
     await clearSoftwareCache();
-    return software;
-}
-// Read Software
-const getSoftware = async (page,limit,search,catFilter) => {
-    const skip=(page-1)*limit;
+  }
 
-    const filter={}
-    
-    if(search&&search.trim()!==""){
-        filter.$or=[
-            {softwareName:{$regex:search,$options:"i"}},
-            {vendor:{$regex:search,$options:"i"}}
-        ]
+  return software;
+};
+
+// =============================
+// 🔹 GET Software
+// =============================
+const getSoftware = async (page, limit, search, catFilter) => {
+  const redisClient = getRedisClient();
+  const skip = (page - 1) * limit;
+
+  const filter = {};
+
+  if (search && search.trim() !== "") {
+    filter.$or = [
+      { softwareName: { $regex: search, $options: "i" } },
+      { vendor: { $regex: search, $options: "i" } }
+    ];
+  }
+
+  if (catFilter && catFilter !== "All") {
+    filter.category = catFilter;
+  }
+
+  const cacheKey = `software:list:page=${page}:limit=${limit}:search=${search}:catFilter=${catFilter}`;
+
+  // 🔥 CACHE READ
+  if (redisClient && redisClient.isOpen) {
+    const cachedData = await redisClient.get(cacheKey);
+
+    if (cachedData) {
+      console.log("⚡ Software from Redis");
+      return JSON.parse(cachedData);
     }
+  }
 
-    if(catFilter&&catFilter!=="All"){
-        filter.category=catFilter;
+  console.log("🧠 Software from MongoDB");
+
+  const allSoftware = await Software.find();
+  const existingSoftware = await Software.find(filter)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const totalSoftware = await Software.countDocuments();
+
+  const activeLicenses = await Software.countDocuments({
+    expiryDate: { $gt: new Date() }
+  });
+
+  const critical = await Software.countDocuments({
+    expiryDate: { $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
+  });
+
+  const stats = await Software.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalLicenses: { $sum: "$totalLicenses" },
+        usedLicenses: { $sum: "$usedLicenses" },
+      }
     }
-        const cacheKey = `software:list:page=${page}:limit=${limit}:search=${search}:catFilter=${catFilter}`;
-        const cachedData = await redisClient.get(cacheKey);
-        if (cachedData) {
-        console.log("Software list from Redis");
-        return JSON.parse(cachedData);
-        }
-    console.log("Software list from MongoDB");
+  ]);
 
-
-    const allSoftware=await Software.find();
-    const existingSoftware = await  Software.find(filter).sort({createdAt:-1}).skip(skip).limit(limit);
-    if (!existingSoftware) {
-        throw new Error("No Software found in the inventory.");
+  const result = {
+    existingSoftware,
+    allSoftware,
+    totalPages: Math.ceil(totalSoftware / limit),
+    currentPage: page,
+    stats: {
+      totalSoftwares: totalSoftware,
+      activeLicenses,
+      totalLicenses: stats[0]?.totalLicenses || 0,
+      usedLicenses: stats[0]?.usedLicenses || 0,
+      critical,
     }
-    const totalSoftware=await Software.countDocuments();
-    const activeLicenses = await Software.countDocuments({
-  expiryDate: { $gt: new Date() }
-});
-//Critical / Expired
-const today = new Date();
+  };
 
-const critical = await Software.countDocuments({
-  expiryDate: { $lte: new Date(today.getTime() + 30*24*60*60*1000) }
-});
+  // 🔥 CACHE SAVE
+  if (redisClient && redisClient.isOpen) {
+    await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
+  }
 
+  return result;
+};
 
-    const totalPages=Math.ceil(totalSoftware/limit);
-
-    const stats=await Software.aggregate(
-        [
-            {
-                $group:{
-                    _id:null,
-                    totalLicenses:{$sum:"$totalLicenses"},
-                    usedLicenses:{$sum:"$usedLicenses"},
-                }
-            }
-        ]
-    )
-
-    console.log(stats[0]?.usedLicenses);
-    console.log(stats[0]?.totalLicenses);
-
-     const result= {existingSoftware,
-        allSoftware,
-        totalPages,
-        currentPage:page,
-    stats:{
-        totalSoftwares:totalSoftware,
-        activeLicenses:activeLicenses,
-        totalLicenses:stats[0]?.totalLicenses,
-        usedLicenses:stats[0]?.usedLicenses,
-        critical:critical,
-        // upcoming:upcoming
-    }};
-    await redisClient.setEx(cacheKey,60,JSON.stringify(result));
-    return result;
-}
-
-// READ a single SoftwareModel by its specific MongoDB ID
-const getOneSoftware=async(softwareId)=>{
-    const singleSoftware=await Software.findById(softwareId);
-    if(singleSoftware==null){
-        throw new Error("No  specific software found in the inventory.");
-    }
-    return singleSoftware;   
-}
-
-// Delete Software
+// =============================
+// 🔹 DELETE Software
+// =============================
 const removeSoftware = async (softwareId) => {
-    // 1. Delete all associated individual licenses first
-    await IndividualSoftware.deleteMany({ softwareModelId: softwareId });
+  const redisClient = getRedisClient();
 
-    // 2. Delete the software model
-    const deleteSoftware = await Software.deleteOne({ _id: softwareId });
-    
+  await IndividualSoftware.deleteMany({ softwareModelId: softwareId });
+
+  const deleteSoftware = await Software.deleteOne({ _id: softwareId });
+
+  if (deleteSoftware.deletedCount === 0) {
+    throw new Error("No software found");
+  }
+
+  if (redisClient && redisClient.isOpen) {
     await redisClient.del("dashboard:data");
     await redisClient.del(`software:${softwareId}`);
     await clearSoftwareCache();
+  }
 
-    if (deleteSoftware.deletedCount === 0) {
-        throw new Error("No software found for delete");
-    }
-    return deleteSoftware;
-}
-// Update software
-const modifySoftware = async (softwareId, data) => {
-    const oldSoftware = await Software.findById(softwareId);
-    if (!oldSoftware) {
-        throw new Error("No software found for update");
-    }
+  return deleteSoftware;
+};
 
-    const oldTotal = oldSoftware.totalLicenses || 0;
-    const newTotal = parseInt(data.totalLicenses) || 0;
-
-    // Prevent reducing total licenses manually
-    if (newTotal < oldTotal) {
-        throw new Error(`Cannot reduce total licenses below current count (${oldTotal}).`);
-    }
-
-    const updated = await Software.findByIdAndUpdate(softwareId, data, {
-        returnDocument: "after",
-        runValidators: true
-    });
-
-    // If totalLicenses increased, generate additional licenses
-    if (newTotal > oldTotal) {
-        const additionalCount = newTotal - oldTotal;
-        const licenses = [];
-        const vendorPrefix = updated.vendor.substring(0, 3).toUpperCase();
-        const softwarePrefix = updated.softwareName.substring(0, 3).toUpperCase();
-        const timestamp = Date.now().toString().slice(-4);
-
-        for (let i = 1; i <= additionalCount; i++) {
-            licenses.push({
-                softwareModelId: updated._id,
-                licenseKey: `${vendorPrefix}-${softwarePrefix}-KEY-${timestamp}-${String(oldTotal + i).padStart(3, '0')}`,
-                status: "Available",
-                expiryDate: updated.expiryDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-                renewalStatus: "Active"
-            });
-        }
-        await IndividualSoftware.insertMany(licenses);
-    }
-
-    await clearSoftwareCache();
-    return updated;
-}
-
-// module.exports={createSoftware,getSoftware,getOneSoftware,removeSoftware,modifySoftware};
-module.exports={createSoftware,getSoftware,getOneSoftware,removeSoftware,modifySoftware};
+// =============================
+module.exports = {
+  createSoftware,
+  getSoftware,
+  getOneSoftware: async (id) => Software.findById(id),
+  removeSoftware,
+  modifySoftware: async (id, data) =>
+    Software.findByIdAndUpdate(id, data, { new: true })
+};
