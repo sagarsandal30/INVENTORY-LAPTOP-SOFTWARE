@@ -6,7 +6,7 @@ const LaptopModel = require("../models/LaptopModel");
 const mongoose = require("mongoose");
 const {redisClient}=require("../../Config/redisClient")
 
- const showDashboardData= async()=>{
+ const  showDashboardData= async()=>{
 
    const cacheKey = "dashboard:data";
    // 1. Check Redis first

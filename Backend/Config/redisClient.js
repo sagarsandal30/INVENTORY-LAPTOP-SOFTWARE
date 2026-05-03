@@ -4,7 +4,6 @@ let redisClient = null;
 
 const connectRedis = async () => {
   try {
-    // ✅ Check if REDIS_URL exists
     if (!process.env.REDIS_URL) {
       console.log("⚠️ Redis URL not found. Running without Redis.");
       return;
@@ -12,8 +11,10 @@ const connectRedis = async () => {
 
     redisClient = createClient({
       url: process.env.REDIS_URL,
-       tls: true,
-    rejectUnauthorized: false
+      socket: {
+        tls: true,
+        rejectUnauthorized: false,
+      },
     });
 
     redisClient.on("error", (err) => {
@@ -21,12 +22,13 @@ const connectRedis = async () => {
     });
 
     await redisClient.connect();
-
     console.log("✅ Redis connected");
   } catch (error) {
-    console.log("⚠️ Redis failed, continuing without cache");
+    console.log("⚠️ Redis failed, continuing without cache:", error.message);
     redisClient = null;
   }
 };
 
-module.exports = { redisClient, connectRedis };
+const getRedisClient = () => redisClient;
+
+module.exports = { connectRedis, getRedisClient };
