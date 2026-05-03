@@ -30,7 +30,7 @@ export const getLaptopModels = async (page,limit,search) => {
         headers:{
             Authorization:`Bearer ${token}`
         },
-        params:{page,limit,search,status}
+        params:{page,limit,search}
       }
     );
     return result.data;
