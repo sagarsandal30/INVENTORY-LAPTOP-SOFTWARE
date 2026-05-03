@@ -15,7 +15,7 @@ const getConfig = () => {
 export const createEmployee = async (userData) => {
   try {
     const result = await axios.post(
-      `${BASE_URL}/${APIRoutes.EMPLOYEE}`,
+      `${BASE_URL}${APIRoutes.EMPLOYEE}`,
       userData,
       getConfig()
     );
@@ -28,7 +28,7 @@ export const createEmployee = async (userData) => {
 export const getEmployees = async (page, limit, search, status) => {
   try {
     const result = await axios.get(
-      `${BASE_URL}/${APIRoutes.EMPLOYEE}`,
+      `${BASE_URL}${APIRoutes.EMPLOYEE}`,
       {
         ...getConfig(),
         params: { page, limit, search, status }
@@ -42,7 +42,7 @@ export const getEmployees = async (page, limit, search, status) => {
 export const getEmployeeById = async (employeeId) => {
   try {
     const result = await axios.get(
-      `${BASE_URL}/${APIRoutes.EMPLOYEE}/${employeeId}`,
+      `${BASE_URL}${APIRoutes.EMPLOYEE}/${employeeId}`,
       getConfig()
     );
     return result.data;
@@ -53,7 +53,7 @@ export const getEmployeeById = async (employeeId) => {
 export const deleteEmployeeById = async (EmployeeId) => {
   try {
     const result = await axios.delete(
-      `${BASE_URL}/${APIRoutes.EMPLOYEE}/${EmployeeId}`,
+      `${BASE_URL}${APIRoutes.EMPLOYEE}/${EmployeeId}`,
       getConfig()
     );
     return result.data;
@@ -66,7 +66,7 @@ export const deleteEmployeeById = async (EmployeeId) => {
 export const updateEmployeeById = async (EmployeeId, formData) => {
   try {
     const result = await axios.put(
-      `${BASE_URL}/${APIRoutes.EMPLOYEE}/${EmployeeId}`,
+      `${BASE_URL}${APIRoutes.EMPLOYEE}/${EmployeeId}`,
       formData,
       getConfig()
     );
