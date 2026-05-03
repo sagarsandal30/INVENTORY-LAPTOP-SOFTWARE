@@ -94,13 +94,7 @@ const today = new Date();
 const critical = await Software.countDocuments({
   expiryDate: { $lte: new Date(today.getTime() + 30*24*60*60*1000) }
 });
-//Upcoming Renewals
-// const upcoming = await Software.countDocuments({
-//   expiryDate: {
-//     $gt: new Date(Date.now() + 30*24*60*60*1000),
-//     $lte: new Date(Date.now() + 90*24*60*60*1000)
-//   }
-// });
+
 
     const totalPages=Math.ceil(totalSoftware/limit);
 
