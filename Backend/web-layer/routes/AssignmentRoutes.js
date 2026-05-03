@@ -4,7 +4,7 @@ const assignmentRouter = express.Router();
 
 const authMiddleware = require("../middlewares/AuthMiddleware");
 // const {createAssignment,getAllAssignments,getAssignmentsById,updateAssignment,returnAssignment,deleteAssignment} = require("../controllers/AssignmentController");
- const {createAssignment,getAllAssignments,getAssignmentsById,returnAssignment,  getAvaliableEmployees}= require("../controllers/AssignmentController");
+ const {createAssignment,getAllAssignments,getAssignmentsById,returnAssignment,  getAvaliableEmployees, deleteAssignment}= require("../controllers/AssignmentController");
 const allowRoles = require("../middlewares/AllowRoles");
 
 assignmentRouter.use(authMiddleware);

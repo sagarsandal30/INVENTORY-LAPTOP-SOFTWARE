@@ -86,6 +86,14 @@ const getAvaliableEmployees = async (req, res) => {
       message: " Avaliable Employees fetched successfully",
          data  ,
           });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 const deleteAssignment = async (req, res) => {
   try {
     const id = req.params.id;
