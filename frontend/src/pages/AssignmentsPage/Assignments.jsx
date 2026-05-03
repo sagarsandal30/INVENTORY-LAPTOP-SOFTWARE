@@ -39,19 +39,27 @@ const INITIAL_ASSIGNMENTS = [];
 
 const STATUSES = ["All", "Assigned", "Returned"];
 const ASSET_TYPES = ["All", "Laptop", "Software"];
-  const data=JSON.parse(localStorage.getItem("User"));
+// Get user data safely
+const getUserData = () => {
+  try {
+    const userStr = localStorage.getItem("User");
+    return userStr ? JSON.parse(userStr) : null;
+  } catch (err) {
+    return null;
+  }
+};
 
-const EMPTY_FORM = {
+const createEmptyForm = (user) => ({
   employeeId: "",
   assetType: "Laptop",
   laptopModelId: "",
   laptopAssetId: "",
   softwareId: "",
   softwareAssetId: "",
-  assignedBy:  data?.role || "",
-  status:"Assigned",
+  assignedBy: user?.role || "",
+  status: "Assigned",
   assignDate: new Date().toISOString().split("T")[0],
-};
+});
 const  INITIAL_STATS=[];
 
 const Assignments = () => {
@@ -71,14 +79,15 @@ const Assignments = () => {
   const [showModal, setShowModal] = useState(false);
   const [showDetail, setShowDetail] = useState(null);
   const [deleteConfirm,setDeleteConfirm]=useState(null);
-  const [formData, setFormData] = useState(EMPTY_FORM);
+  const user = useMemo(() => getUserData(), []);
+  const [formData, setFormData] = useState(() => createEmptyForm(user));
   const [formErrors, setFormErrors] = useState({});
   const [toast, setToast] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages,setTotalPages]=useState(1);
-  const[stats,setStats]=useState(INITIAL_STATS);
+  const [totalPages, setTotalPages] = useState(1);
+  const [stats, setStats] = useState(INITIAL_STATS);
 
-  console.log(data.firstName);
+  // console.log(user?.firstName);
 
   const fetchAssignments = async () => {
     try {
@@ -196,7 +205,7 @@ const Assignments = () => {
   };
 
   const handleAddNew = () => {
-    setFormData(EMPTY_FORM);
+    setFormData(createEmptyForm(user));
     setFormErrors({});
     setShowModal(true);
   };
@@ -222,7 +231,7 @@ showToast("Asset Returned Successfully");
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setFormData(EMPTY_FORM);
+    setFormData(createEmptyForm(user));
     setFormErrors({});
   };
   
@@ -235,10 +244,15 @@ showToast("Asset Returned Successfully");
       return;
     }
     try {
-      const data = await createAssignment(formData);
-      setAssignments((prev) => [data.assignment, ...prev]);
-      showToast("Assignment created successfully");
-      handleCloseModal();
+      const result = await createAssignment(formData);
+      if (result && result.data) {
+        setAssignments((prev) => [result.data, ...prev]);
+        showToast("Assignment created successfully");
+        handleCloseModal();
+        fetchAssignments(); // Refresh to get updated stats
+      } else {
+        throw new Error("Invalid response from server");
+      }
     } catch (error) {
       console.log(error);
       showToast(error?.message || "Failed to create assignment", "error");
@@ -251,7 +265,6 @@ showToast("Asset Returned Successfully");
     if (name === "assetType") {
       setFormData((prev) => ({
         ...prev,
-
         assetType: value,
         laptopModelId: "",
         laptopAssetId: "",
@@ -270,13 +283,12 @@ showToast("Asset Returned Successfully");
         softwareId: value,
         softwareAssetId: "",
       }));
-    }
-    else if(name ==="assignedBy"){
-setFormData((prev) => ({
-      ...prev,
-      assignedBy: data.role
-    }));
-    }else {
+    } else if (name === "assignedBy") {
+      setFormData((prev) => ({
+        ...prev,
+        assignedBy: user?.role || "",
+      }));
+    } else {
       setFormData((prev) => ({
         ...prev,
         [name]: value,

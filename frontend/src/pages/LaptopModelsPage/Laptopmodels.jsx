@@ -138,9 +138,11 @@ useEffect(()=>{
       if (isEditing) {
         const data=await updateLaptopModelById(selectedModel._id,modelData);
         console.log("Update Data", data);
-      setLaptopModels((prevModels) =>
-        prevModels.map((m) => (m._id === isEditing._id ? data.updatedLaptopModel:m))
-      );
+        setLaptopModels((prevModels) =>
+          prevModels.map((m) =>
+            m._id === selectedModel._id ? data.updatedLaptopModel : m
+          )
+        );
       showToast(`"${modelData.modelName}" updated successfully`);
     } else {
       const data=await createLaptopModel(modelData);
