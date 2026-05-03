@@ -1,4 +1,4 @@
-const {create,fetch,fetchById,assignmentReturn,avaliableEmployee} = require("../../service-layer/services/AssignmentService");
+const {create,fetch,fetchById,assignmentReturn,avaliableEmployee,remove} = require("../../service-layer/services/AssignmentService");
 
 
 const createAssignment=async (req,res)=>{
@@ -86,13 +86,21 @@ const getAvaliableEmployees = async (req, res) => {
       message: " Avaliable Employees fetched successfully",
          data  ,
           });
+const deleteAssignment = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const data = await remove(id);
+    res.status(200).json({
+      success: true,
+      message: "Assignment deleted successfully",
+      data,
+    });
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
 
-// module.exports= {createAssignment,getAllAssignments,getAssignmentsById,updateAssignment,returnAssignment,deleteAssignment};
-module.exports= {createAssignment,getAllAssignments,getAssignmentsById,returnAssignment,getAvaliableEmployees}
+module.exports= {createAssignment,getAllAssignments,getAssignmentsById,returnAssignment,getAvaliableEmployees,deleteAssignment}

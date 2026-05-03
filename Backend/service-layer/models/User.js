@@ -3,70 +3,74 @@ const bcrypt = require("bcrypt");
 
 const UserSchema = new mongoose.Schema(
   {
-    firstName:{ 
-      type: String, 
-      required: true 
-    },
-    lastName: { 
-      type: String, 
-       required:true
-    },
-    email: { 
+    firstName: {
       type: String,
-       required: true,
-        unique: true 
+      required: true,
+      trim: true,
     },
-    phone: { 
-      type: String ,
+    lastName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    phone: {
+      type: String,
       default: null,
-      
     },
-    department: { 
-      type: String ,
-      enum:["Engineering",
-  "IT Operations",
-  "Human Resources",
-  "Finance",
-  "Marketing",
-  "Sales",
-  "Design",
-  "Quality Assurance",
-  "Customer Support",
-  "Analytics",
-  "Legal",
-  "Administration"],
- 
+    department: {
+      type: String,
+      required: true,
     },
     role: {
       type: String,
-      enum: ["Employee", "Manager", "Admin","IT Operations"],
+      enum: ["Employee", "Admin", "Manager", "IT Operations"],
       default: "Employee",
     },
-    password:{
-  type: String,
-      required:true,
+    profilePhoto: {
+      type: String,
+      default: null,
     },
-    
-     phone: {
-  type: String,
-  default: null,
-},
+    status: {
+      type: String,
+      enum: ["Active", "Inactive"],
+      default: "Active",
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-// Hash password before saving to the database
-UserSchema.pre("save", async function () {
-  // Only hash if the password was modified (or is new)
-  if (!this.isModified("password"))
-   return;
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-//  this.confirmPassword=await bcrypt.hash(this.confirmPassword, salt);
+// Pre-save hook to hash password
+UserSchema.pre("save", async function (next) {
+  // Only hash if the password was modified (or is new)
+  if (!this.isModified("password")) {
+    return next();
+  }
+
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
-// Helper method to compare passwords
+// Method to compare passwords
 UserSchema.methods.comparePassword = async function (candidatePassword) {
+  if (!candidatePassword || !this.password) return false;
   return await bcrypt.compare(candidatePassword, this.password);
 };
 

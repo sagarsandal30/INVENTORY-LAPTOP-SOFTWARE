@@ -15,6 +15,7 @@ assignmentRouter.get("/getAvaliableEmployees",allowRoles("Admin","IT Operations"
 
 assignmentRouter.get("/getSingleAssignment/:id",allowRoles("Admin","IT Operations"), getAssignmentsById);
 assignmentRouter.patch("/returnAssignments/:id",allowRoles("Admin", "IT Operations"),returnAssignment);
+assignmentRouter.delete("/deleteAssignment/:id", allowRoles("Admin", "IT Operations"), deleteAssignment);
 
 
 module.exports=assignmentRouter;

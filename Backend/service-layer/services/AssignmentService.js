@@ -4,9 +4,6 @@ const Employee = require("../models/Employee");
 const LaptopAsset = require("../models/Laptop");
 const LaptopModel = require("../models/LaptopModel");
 const mongoose = require("mongoose");
-const {
-  returnAssignment,
-} = require("../../web-layer/controllers/AssignmentController");
 const IndividualSoftware = require("../models/IndividualSoftware");
 const Laptop = require("../models/Laptop");
 
@@ -215,8 +212,66 @@ const fetch = async (page, limit, search, assetType, assetStatus) => {
   };
 };
 const fetchById = async (AssetId) => {
-  const assetById = await Assignment.findOne();
+  const assetById = await Assignment.findById(AssetId);
   return assetById;
+};
+
+// Remove Assignment
+const remove = async (assignmentId) => {
+  const assignment = await Assignment.findById(assignmentId);
+  if (!assignment) {
+    throw new Error("Assignment not found");
+  }
+
+  // If it's still assigned, we should update the assets before deleting the record
+  if (assignment.status === "Assigned") {
+    // Update Employee counts
+    const employee = await Employee.findById(assignment.employeeId);
+    if (employee) {
+      if (assignment.assetType === "Laptop") {
+        employee.laptopAssigned = Math.max(0, (employee.laptopAssigned || 0) - 1);
+      } else {
+        employee.softwareAssigned = Math.max(0, (employee.softwareAssigned || 0) - 1);
+      }
+      await employee.save();
+    }
+
+    // Update Asset specific collections
+    if (assignment.assetType === "Laptop") {
+      const laptopAsset = await LaptopAsset.findById(assignment.laptopAssetId);
+      if (laptopAsset) {
+        laptopAsset.status = "Available";
+        laptopAsset.assignedTo = null;
+        await laptopAsset.save();
+
+        // Update Model counts
+        const laptopModel = await LaptopModel.findById(assignment.laptopModelId);
+        if (laptopModel) {
+          laptopModel.avaliable = (laptopModel.avaliable || 0) + 1;
+          laptopModel.inUse = Math.max(0, (laptopModel.inUse || 0) - 1);
+          await laptopModel.save();
+        }
+      }
+    } else if (assignment.assetType === "Software") {
+      if (assignment.softwareAssetId) {
+        const license = await IndividualSoftware.findById(assignment.softwareAssetId);
+        if (license) {
+          license.status = "Available";
+          license.assignedTo = null;
+          await license.save();
+        }
+      }
+
+      const software = await Software.findById(assignment.softwareId);
+      if (software) {
+        software.usedLicenses = Math.max(0, (software.usedLicenses || 0) - 1);
+        await software.save();
+      }
+    }
+  }
+
+  await Assignment.findByIdAndDelete(assignmentId);
+  return { message: "Assignment deleted successfully" };
 };
 
 //Assignemnt Return
@@ -293,4 +348,4 @@ const employees = await Employee.find({status:"Active"});
   return employees;
    };
 
-module.exports = { create ,fetch,fetchById,assignmentReturn,avaliableEmployee};
+module.exports = { create, fetch, fetchById, assignmentReturn, avaliableEmployee, remove };
