@@ -23,6 +23,8 @@ const authMiddleware = (req, res, next) => {
     const token = tokenHeader.split(" ")[1];
     const decoded = jwt.verify(token, secret);
     req.user = decoded;
+    console.log("Created At:", new Date(decoded.iat * 1000).toLocaleString());
+    console.log("Expires At:", new Date(decoded.exp * 1000).toLocaleString());
     console.log("🔓 User Authenticated:", req.user.role, req.user.email);
     next();
   } catch (error) {

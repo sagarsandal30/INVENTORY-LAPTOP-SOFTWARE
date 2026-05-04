@@ -39,7 +39,6 @@ const LaptopSchema = new mongoose.Schema(
         type:String,
         required:true
     },
-   
 
      graphicsCard: { 
       type: String 
