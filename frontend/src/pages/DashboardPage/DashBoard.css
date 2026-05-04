@@ -378,6 +378,14 @@ width: calc(100% - 130px);
     grid-template-columns: 1fr;
   }
 }
+@media (max-width:320px){
+   .stats-grid {
+    grid-template-columns: 4fr;
+  }
+  .quick-stats {
+    grid-template-columns: 1fr;
+  }
+}
 
 @media (max-width: 768px) {
   .stats-grid {
