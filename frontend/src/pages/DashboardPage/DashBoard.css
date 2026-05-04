@@ -378,15 +378,7 @@ width: calc(100% - 130px);
     grid-template-columns: 1fr;
   }
 }
-/* @media (max-width:320px){
 
-   .stats-grid {
-    grid-template-columns: 4fr;
-  }
-  .quick-stats {
-    grid-template-columns: 1fr;
-  }
-} */
 
 @media (max-width: 768px) {
   .stats-grid {
@@ -411,12 +403,9 @@ width: calc(100% - 130px);
   }
 }
 
-
-
 /* Small Mobile */
-@media (max-width: 320px) {
+@media (max-width: 480px) {
   
-
   .header-left {
     align-items: flex-start;
   }
