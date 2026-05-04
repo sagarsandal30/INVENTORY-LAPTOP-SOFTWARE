@@ -24,10 +24,14 @@
 .isl-root {
   background: var(--isl-bg);
   min-height: 100vh;
-  padding: 40px;
-  padding-top: 100px;
-  padding-left: 140px;
+  padding: 20px;
+  margin-top: 80px;
+  margin-left: 130px;
+  width: calc(100% - 130px);
+  position: relative;
+  transition: all 0.3s ease;
 }
+
 
 .isl-main {
   max-width: 1400px;
@@ -520,3 +524,151 @@
 
 .isl-spinner { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+ ═══════════════════════════════════════════ */
+@media (max-width: 1200px) {
+  .isl-stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  .isl-root {
+    margin-left: 130px;
+    width: calc(100% - 130px);
+  }
+}
+
+@media (max-width: 992px) {
+  .isl-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .isl-root {
+    margin-left: 80px;
+    width: calc(100% - 80px);
+    margin-top: 70px;
+    padding: 15px;
+  }
+
+  .isl-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .isl-header-right {
+    width: 100%;
+    gap: 10px;
+  }
+
+  .isl-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 15px;
+  }
+
+  .isl-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .isl-stat-card {
+    padding: 15px;
+    gap: 12px;
+  }
+
+  .isl-stat-info h4 {
+    font-size: 22px;
+  }
+
+  .isl-filters-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .isl-search-box {
+    max-width: 100%;
+  }
+
+  .isl-select-wrap {
+    width: 100%;
+  }
+
+  .isl-select {
+    width: 100%;
+  }
+
+  .isl-result-count {
+    margin-left: 0;
+    text-align: right;
+  }
+
+  .isl-table-card {
+    margin-top: 5px;
+    overflow-x: auto;
+  }
+
+  .isl-table {
+    min-width: 800px;
+  }
+
+  .isl-modal {
+    padding: 25px 20px;
+    border-radius: 16px;
+  }
+
+  .isl-form-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .isl-root {
+    margin-top: 60px;
+  }
+
+  .isl-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .isl-header-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .isl-title-wrap h1 {
+    font-size: 24px;
+  }
+
+  .isl-toast {
+    right: 20px;
+    left: 20px;
+    top: 80px;
+  }
+}
+
+/* Tiny Mobile */
+@media (max-width: 400px) {
+  .isl-root {
+    padding: 10px;
+  }
+
+  .isl-header-right {
+    flex-direction: column;
+  }
+
+  .isl-btn {
+    width: 100%;
+  }
+
+  .isl-stat-card {
+    padding: 12px;
+  }
+}
