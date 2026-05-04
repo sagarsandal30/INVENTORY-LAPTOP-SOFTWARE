@@ -404,7 +404,7 @@ width: calc(100% - 130px);
 }
 
 /* Small Mobile */
-@media (max-width: 480px) {
+@media (max-width: 420px) {
   .stats-grid {
     grid-template-columns: 1fr;
   }
