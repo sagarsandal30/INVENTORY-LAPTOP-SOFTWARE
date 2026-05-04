@@ -438,7 +438,9 @@ width: calc(100% - 130px);
     margin-left: 80px; /* Keep margin for sidebar if it stays visible */
     width: calc(100% - 80px);
     padding: 12px;
+    margin-top: 60px;
   }
+
 
   .header-left {
     flex-direction: column;

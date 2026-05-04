@@ -44,24 +44,23 @@ useEffect(() => {
       </div>
 
       <div className="nav-right">
-        <button className="icon-btn">
+        <button className="icon-btn nav-hide-mobile">
           <Mail size={20} />
         </button>
 
-        <button className="icon-btn">
+        <button className="icon-btn nav-hide-mobile">
           <Globe size={20} />
         </button>
 
         {role !== "Employee" && (
-          <Link to="/IT-Operation/notifications" className="icon-btn" >
-            <button className="icon-btn">
+          <Link to="/IT-Operation/notifications" className="icon-btn notif-link" >
               <div className="notification-wrapper">
                 <Bell size={20} />
                 <span className="badge">{totalNotif || 0}</span>
               </div>
-            </button>
           </Link>
         )}
+
 
 <Link to="/profileSettings">
         <div className="user-profile">

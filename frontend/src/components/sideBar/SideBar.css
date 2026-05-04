@@ -96,6 +96,7 @@
 @media (max-width: 768px) {
   .sidebar-outer {
     width: 80px;
+    top: 70px;
   }
 
   .menu-label {
@@ -107,3 +108,10 @@
     padding: 14px;
   }
 }
+
+@media (max-width: 480px) {
+  .sidebar-outer {
+    top: 60px;
+  }
+}
+
