@@ -415,9 +415,7 @@ width: calc(100% - 130px);
 
 /* Small Mobile */
 @media (max-width: 320px) {
-  .dashboard {
-    padding: 12px;
-  }
+  
 
   .header-left {
     align-items: flex-start;
@@ -425,6 +423,10 @@ width: calc(100% - 130px);
 
   .dashboard-title {
     font-size: 22px;
+  }
+  .dashboard {
+    margin-left: 80px;
+    width: 100%;
   }
 
   .dashboard-subtitle {
