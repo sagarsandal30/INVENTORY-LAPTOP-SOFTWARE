@@ -443,14 +443,14 @@ width: calc(100% - 130px);
 
 
   .header-left {
-    flex-direction: column;
+    
     align-items: flex-start;
     gap: 10px;
   }
 
   .header-icon {
-    width: 40px;
-    height: 40px;
+    width: 350px;
+    height: 35px;
   }
 
   .dashboard-title {
