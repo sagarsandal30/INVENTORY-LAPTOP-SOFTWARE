@@ -3,10 +3,12 @@
   position: relative;
   right: 0;
   margin-top: 80px;
-    margin-left: 130px;
-width: calc(100% - 130px);
+  margin-left: 130px;
+  width: calc(100% - 130px);
   padding: 20px;
+  transition: all 0.3s ease;
 }
+
 
 /* Page Header */
 .page-header {
@@ -496,35 +498,137 @@ width: calc(100% - 130px);
   }
 }
 
+@media (max-width: 1024px) {
+  .laptop-models {
+    margin-left: 130px;
+    width: calc(100% - 130px);
+  }
+}
+
 @media (max-width: 768px) {
+  .laptop-models {
+    margin-left: 80px;
+    width: calc(100% - 80px);
+    padding: 15px;
+    margin-top: 70px;
+  }
+
   .page-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
   }
 
+  .header-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .page-title {
+    font-size: 22px;
+  }
+
   .stats-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+  }
+
+  .stat-card-small {
+    padding: 15px;
+  }
+
+  .stat-value-small {
+    font-size: 24px;
   }
 
   .table-controls {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
   }
 
   .search-box {
     max-width: 100%;
   }
 
-  .pagination {
+  .emp-pagination {
     flex-direction: column;
     gap: 16px;
+    text-align: center;
   }
 
-  .page-title {
-    font-size: 22px;
+  .lm-detail-grid {
+    grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 576px) {
+  .laptop-models {
+    margin-top: 60px;
+    padding: 12px;
+  }
+
+  .btn-primary {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 20px;
+  }
+
+  .stat-card-small {
+    gap: 12px;
+  }
+
+  .stat-icon-small {
+    width: 40px;
+    height: 40px;
+  }
+
+  .stat-label-small {
+    font-size: 12px;
+  }
+
+  .stat-value-small {
+    font-size: 20px;
+  }
+
+  .lm-modal {
+    max-height: 95vh;
+  }
+
+  .lm-modal-header {
+    padding: 20px;
+  }
+
+  .lm-modal-body {
+    padding: 20px;
+  }
+
+  .lm-asset-summary-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .lm-asset-chip {
+    flex: 1;
+    min-width: 100px;
+  }
+}
+
+/* Tiny Mobile */
+@media (max-width: 400px) {
+  .laptop-models {
+    padding: 10px;
+  }
+  
+  .page-subtitle {
+    display: none;
+  }
+
+  .lm-modal-title {
+    font-size: 18px;
+  }
+}
+
 
 /* ═══════════════════════════════════════════
    TOAST NOTIFICATION
