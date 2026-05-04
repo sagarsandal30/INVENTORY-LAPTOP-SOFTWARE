@@ -375,73 +375,130 @@ width: calc(100% - 130px);
 /* Responsive Design */
 @media (max-width: 1200px) {
   .dashboard-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
 }
 
+@media (max-width: 1024px) {
+  .dashboard {
+    margin-left: 130px;
+    width: calc(100% - 130px);
+    padding: 20px;
+  }
+}
 
 @media (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
+  .dashboard {
+    margin-left: 80px;
+    width: calc(100% - 80px);
+    padding: 15px;
+    margin-top: 70px;
   }
 
-  .quick-stats {
-    grid-template-columns: 1fr;
+  .dashboard-header {
+    margin-bottom: 20px;
+  }
+
+  .header-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
   }
 
   .dashboard-title {
-    font-size: 24px;
+    font-size: 22px;
+  }
+
+  .dashboard-subtitle {
+    font-size: 13px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+  }
+
+  .stat-card {
+    padding: 16px;
   }
 
   .stat-value {
     font-size: 28px;
   }
 
-  .dashboard {
-    margin-left: 80px;
-    width: 100%;
+  .quick-stats {
+    grid-template-columns: 1fr;
+    padding: 15px;
   }
 }
 
-/* Small Mobile */
-@media (max-width: 420px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
+/* Mobile Screens */
+@media (max-width: 576px) {
+  .dashboard {
+    margin-left: 80px; /* Keep margin for sidebar if it stays visible */
+    width: calc(100% - 80px);
+    padding: 12px;
   }
-  
+
   .header-left {
+    flex-direction: column;
     align-items: flex-start;
+    gap: 10px;
+  }
+
+  .header-icon {
+    width: 40px;
+    height: 40px;
   }
 
   .dashboard-title {
-    font-size: 22px;
-  }
-  .dashboard {
-    width: 100%;
+    font-size: 20px;
   }
 
-  .dashboard-subtitle {
-    font-size: 12px;
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
 
-  .stat-icon {
-    width: 44px;
-    height: 44px;
+  .dashboard-card {
+    padding: 16px;
   }
 
-  .stat-value {
-    font-size: 26px;
+  .card-header {
+    margin-bottom: 15px;
+    padding-bottom: 12px;
   }
 
   .card-title {
     font-size: 16px;
   }
 
-  .view-all-btn {
+  .activity-item {
+    padding: 8px;
+    gap: 12px;
+  }
+
+  .activity-action, .activity-item-name {
     font-size: 13px;
   }
 
   .reorder-btn {
     padding: 10px;
+    font-size: 13px;
   }
 }
+
+/* Tiny Mobile Screens */
+@media (max-width: 400px) {
+  .dashboard {
+    padding: 10px;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+
+  .dashboard-subtitle {
+    display: none; /* Hide subtitle on very small screens to save space */
+  }
+}
+
