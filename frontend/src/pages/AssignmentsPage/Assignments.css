@@ -11,7 +11,9 @@
   margin-top: 80px;
   margin-left: 130px;
   padding: 20px;
+  transition: all 0.3s ease;
 }
+
 
 /* ── Toast Notification ─────────────────── */
 .assign-toast {
@@ -854,6 +856,13 @@
   }
 }
 
+@media (max-width: 1024px) {
+  .assign-page {
+    margin-left: 130px;
+    width: calc(100% - 130px);
+  }
+}
+
 @media (max-width: 900px) {
   .assign-stats {
     grid-template-columns: repeat(2, 1fr);
@@ -861,39 +870,78 @@
 }
 
 @media (max-width: 768px) {
-  .assign-page{
+  .assign-page {
     margin-left: 80px;
-    
+    width: calc(100% - 80px);
+    padding: 15px;
+    margin-top: 70px;
   }
+
   .assign-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
+    gap: 20px;
   }
 
-  .assign-header-right {
-    width: 100%;
+  .assign-header-icon {
+    width: 48px;
+    height: 48px;
   }
 
   .assign-title {
     font-size: 22px;
   }
 
+  .assign-header-right {
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .assign-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .assign-stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+  }
+
+  .assign-stat-card {
+    padding: 15px;
+  }
+
+  .assign-stat-value {
+    font-size: 24px;
   }
 
   .assign-filters {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
   }
 
   .assign-search-wrap {
     max-width: 100%;
   }
 
+  .assign-filter-group {
+    width: 100%;
+  }
+
+  .assign-select {
+    width: 100%;
+  }
+
   .assign-result-count {
     margin-left: 0;
+  }
+
+  .assign-pagination {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
   }
 
   .assign-modal {
@@ -923,16 +971,32 @@
 
   .assign-radio-group {
     flex-direction: column;
+    gap: 10px;
   }
 }
 
-@media (max-width: 480px) {
-  .assign-btn {
-    width: 100%;
-    justify-content: center;
+@media (max-width: 576px) {
+  .assign-page {
+    margin-top: 60px;
+    padding: 12px;
   }
 
-  .assign-header-right {
-    flex-direction: column;
+  .assign-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Tiny Mobile */
+@media (max-width: 400px) {
+  .assign-page {
+    padding: 10px;
+  }
+
+  .assign-subtitle {
+    display: none;
+  }
+
+  .assign-modal-title {
+    font-size: 18px;
   }
 }
