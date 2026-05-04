@@ -405,6 +405,9 @@ width: calc(100% - 130px);
 
 /* Small Mobile */
 @media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
   
   .header-left {
     align-items: flex-start;
