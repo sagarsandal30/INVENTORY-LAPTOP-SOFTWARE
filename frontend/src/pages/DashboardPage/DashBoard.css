@@ -378,14 +378,15 @@ width: calc(100% - 130px);
     grid-template-columns: 1fr;
   }
 }
-@media (max-width:390px){
+/* @media (max-width:320px){
+
    .stats-grid {
     grid-template-columns: 4fr;
   }
   .quick-stats {
     grid-template-columns: 1fr;
   }
-}
+} */
 
 @media (max-width: 768px) {
   .stats-grid {
@@ -407,5 +408,150 @@ width: calc(100% - 130px);
   .dashboard {
     margin-left: 80px;
     width: 100%;
+  }
+}
+/* Tablet */
+@media (max-width: 1024px) {
+  .dashboard {
+    margin-left: 80px;
+    width: calc(100% - 80px);
+    padding: 18px;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .stats-grid,
+  .quick-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .dashboard {
+    margin-left: 0;
+    width: 100%;
+    margin-top: 70px;
+    padding: 14px;
+  }
+
+  .dashboard-header {
+    align-items: flex-start;
+  }
+
+  .header-left {
+    gap: 12px;
+  }
+
+  .header-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+  }
+
+  .dashboard-title {
+    font-size: 24px;
+  }
+
+  .dashboard-subtitle {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .stats-grid,
+  .quick-stats {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .stat-card,
+  .dashboard-card,
+  .quick-stats {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .stat-value {
+    font-size: 30px;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px;
+  }
+
+  .card-header {
+    gap: 10px;
+  }
+
+  .activity-item {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .activity-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .activity-meta {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .alert-item {
+    gap: 10px;
+  }
+
+  .alert-stock {
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .quick-stat-value {
+    font-size: 24px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .dashboard {
+    padding: 12px;
+  }
+
+  .header-left {
+    align-items: flex-start;
+  }
+
+  .dashboard-title {
+    font-size: 22px;
+  }
+
+  .dashboard-subtitle {
+    font-size: 12px;
+  }
+
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .stat-value {
+    font-size: 26px;
+  }
+
+  .card-title {
+    font-size: 16px;
+  }
+
+  .view-all-btn {
+    font-size: 13px;
+  }
+
+  .reorder-btn {
+    padding: 10px;
   }
 }
