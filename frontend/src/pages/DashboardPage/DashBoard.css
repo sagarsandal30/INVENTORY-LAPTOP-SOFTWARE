@@ -443,7 +443,6 @@ width: calc(100% - 130px);
 
 
   .header-left {
-    
     align-items: flex-start;
     gap: 10px;
   }
