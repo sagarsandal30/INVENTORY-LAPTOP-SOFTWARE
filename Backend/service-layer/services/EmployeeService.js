@@ -41,14 +41,18 @@ const createEmployee = async (employeeData) => {
     email: employeeData.email,
   });
 
-  if (existingEmployee) {
-    if (employeeData.userId && !existingEmployee.userId) {
-      existingEmployee.userId = employeeData.userId;
-      await existingEmployee.save();
-      return existingEmployee;
-    }
-    return existingEmployee;
+  if(existingEmployee){
+    throw new Error("Employee With this email is already present");
   }
+
+  // if (existingEmployee) {
+  //   if (employeeData.userId && !existingEmployee.userId) {
+  //     existingEmployee.userId = employeeData.userId;
+  //     await existingEmployee.save();
+  //     return existingEmployee;
+  //   }
+  //   return existingEmployee;
+  // }
 
   const employee = await Employee.create(employeeData);
 

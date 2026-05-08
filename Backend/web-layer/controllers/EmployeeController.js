@@ -16,7 +16,6 @@ catch(error){
         message:error.message
     })
 }
-
 }
 
 // GET All Employees
