@@ -80,7 +80,6 @@ To replace manual inventory tracking (like Excel) with a scalable, secure, and e
 ## 🔮 Future Enhancements
 
 - 📱 Mobile application  
-- 🤖 AI-based asset failure prediction  
 - 📈 Advanced analytics dashboard  
 - 🔔 Notification system for license expiry  
 

@@ -35,13 +35,6 @@ const LaptopAssetSchema = new mongoose.Schema(
       ref: "Employee",
       default: null
     },
-    aiMetrics: {
-      predictionScore: { type: Number, min: 0, max: 100 },
-      riskLevel: { type: String, enum: ["Low", "Medium", "High", "Critical"] },
-      reason: { type: String },
-      aiRecommendation: { type: String },
-      lastPredictionDate: { type: Date }
-    },
     purchaseDate: {
       type: Date,
       default: Date.now
