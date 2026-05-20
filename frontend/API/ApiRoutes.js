@@ -18,9 +18,6 @@ export const APIRoutes = {
   MY_QUERIES: "queries/my",
   QUERY_STATS: "queries/stats",
   NOTIFICATIONS: "notifications",
-  AI_PREDICT: "ai/predict-failure",
-  AI_HIGH_RISK: "ai/high-risk-laptops",
-  AI_BRAND_ANALYSIS: "ai/brand-failure-analysis",
   SOFTWARE_LICENSE: "software-licenses",
   REPORTS: "reports",
   SETTINGS_PASSWORD: "settings/password"

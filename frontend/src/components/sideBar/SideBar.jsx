@@ -11,7 +11,6 @@ import {
   UserPlus,
   CircleQuestionMark,
   Airplay,
-  BrainCircuit,
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -62,12 +61,6 @@ const Sidebar = () => {
       id: "assignments",
       label: "Assignments",
       icon: ClipboardList,
-      roles: ["Admin", "IT Operations"],
-    },
-    {
-      id: "ai-maintenance",
-      label: "AI Maintenance",
-      icon: BrainCircuit,
       roles: ["Admin", "IT Operations"],
     },
     {

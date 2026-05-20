@@ -59,8 +59,14 @@ const LOCATIONS = ["Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Pune
 const STATUSES = ["All", "Active", "Inactive"];
 
 const EMPTY_FORM = {
-  fullName: "", email: "", phoneNumber: "", role: "Employee", department: "", 
-  joinDate: new Date().toISOString().split('T')[0], location: "Not Assigned", status: "Active"
+  fullName: "", 
+  email: "", 
+  phoneNumber: "",
+  role: "Employee",
+  department: "", 
+  joinDate: new Date().toISOString().split('T')[0],
+  location: "Not Assigned",
+  status: "Active"
 };
 
 const initial_stats={

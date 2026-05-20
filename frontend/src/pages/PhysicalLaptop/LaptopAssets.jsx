@@ -27,10 +27,8 @@ import {
   RefreshCw,
   Filter,
   Wrench,
-  User,
    ChevronLeft,
   ChevronRight,
-  BrainCircuit,
   Zap,
 } from "lucide-react";
 
@@ -47,7 +45,6 @@ import {
   getLaptopModels,
   getEmployees,
 } from "./LaptopAssetsAPI";
-import { predictFailure } from "../../API/aiApi";
 
 
 const NAV_ITEMS = [
@@ -93,7 +90,7 @@ export default function LaptopAssets() {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [formErrors, setFormErrors] = useState({});
   const [toast, setToast] = useState(null);
-  const [aiPredicting, setAiPredicting] = useState(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [stats,setStats]=useState([]);
@@ -259,18 +256,6 @@ const getModelName = (laptopModelId) => {
   };
   }
 
-  const handlePredict = async (assetId) => {
-    setAiPredicting(assetId);
-    try {
-      const res = await predictFailure(assetId);
-      showToast(`Prediction Score: ${res.data.predictionScore}% - Risk: ${res.data.riskLevel}`, "success");
-      fetchLaptopAssets(); // Refresh to get updated metrics
-    } catch (error) {
-      showToast(error.message || "AI Prediction failed", "error");
-    } finally {
-      setAiPredicting(null);
-    }
-  };
   const handleFormChange = (e) => {
     const { name, value } = e.target;
 
@@ -594,19 +579,7 @@ const getModelName = (laptopModelId) => {
                         </td>
                         <td>
                           <div className="la-actions">
-                            <button
-                              className="la-action-btn la-action-btn--view"
-                              style={{ color: "#6366F1" }}
-                              title="Predict Failure"
-                              onClick={() => handlePredict(a._id)}
-                              disabled={aiPredicting === a._id}
-                            >
-                              {aiPredicting === a._id ? (
-                                <RefreshCw size={15} className="spin" />
-                              ) : (
-                                <BrainCircuit size={15} />
-                              )}
-                            </button>
+
                             <button
                               className="la-action-btn la-action-btn--view"
                               title="View"
@@ -921,40 +894,7 @@ const getModelName = (laptopModelId) => {
                         : "N/A"}
                     </span>
                   </div>
-                  {showDetail.aiMetrics && (
-                    <div className="la-detail-card la-detail-card--full" style={{ gridColumn: "span 2", background: "#f8fafc", border: "1px solid #e2e8f0", padding: "15px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px", color: "#6366F1" }}>
-                        <BrainCircuit size={18} />
-                        <span style={{ fontWeight: "700" }}>AI Failure Risk Analysis</span>
-                      </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
-                        <div>
-                          <label className="la-detail-label">Prediction Score</label>
-                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                            <div style={{ flex: 1, height: "8px", background: "#e2e8f0", borderRadius: "4px" }}>
-                              <div style={{ height: "100%", width: `${showDetail.aiMetrics.predictionScore}%`, background: showDetail.aiMetrics.predictionScore > 70 ? "#ef4444" : "#f59e0b", borderRadius: "4px" }}></div>
-                            </div>
-                            <span className="la-detail-value">{showDetail.aiMetrics.predictionScore}%</span>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="la-detail-label">Risk Level</label>
-                          <span className={`la-status-badge ${showDetail.aiMetrics.riskLevel.toLowerCase()}`} style={{ 
-                            background: showDetail.aiMetrics.riskLevel === "Critical" ? "#fef2f2" : "#fff7ed",
-                            color: showDetail.aiMetrics.riskLevel === "Critical" ? "#dc2626" : "#ea580c"
-                          }}>
-                            {showDetail.aiMetrics.riskLevel}
-                          </span>
-                        </div>
-                        <div style={{ gridColumn: "span 2" }}>
-                          <label className="la-detail-label">AI Recommendation</label>
-                          <p style={{ margin: "5px 0 0 0", fontSize: "13px", color: "#475569", fontStyle: "italic" }}>
-                            "{showDetail.aiMetrics.aiRecommendation}"
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+
                 </div>
 
                 <div className="la-modal-footer">

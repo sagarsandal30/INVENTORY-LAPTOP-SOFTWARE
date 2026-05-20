@@ -245,6 +245,25 @@ const handleSubmit = async (e) => {
                   <label className="form-label">
                     Processor <span className="required">*</span>
                   </label>
+                  <select
+                    name="brand"
+                    value={formData.brand}
+                    onChange={handleChange}
+                    className={`form-input ${errors.brand ? "error" : ""}`}
+                  >
+                    <option value="">Select Brand</option>
+                    <option value="Dell">Dell</option>
+                    <option value="Apple">Apple</option>
+                    <option value="HP">HP</option>
+                    <option value="Lenovo">Lenovo</option>
+                    <option value="ASUS">ASUS</option>
+                    <option value="Acer">Acer</option>
+                    <option value="Microsoft">Microsoft</option>
+                    <option value="MSI">MSI</option>
+                    <option value="Razer">Razer</option>
+                    <option value="Samsung">Samsung</option>
+                    <option value="Other">Other</option>
+                  </select>
                   <input
                     type="text"
                     name="processor"

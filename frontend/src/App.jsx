@@ -17,7 +17,6 @@ import LaptopAssets from "./pages/PhysicalLaptop/LaptopAssets";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoutes";
 import EmployeeQueriesPage from "./pages/QueryPage/EmployeeQueryPage";
 import ViewAssets from "./pages/ViewAssets/ViewAssets";
-import AIDashboard from "./pages/AIDashboard/AIDashboard";
 import IndividualSoftware from "./pages/IndividualSoftware/IndividualSoftware.jsx";
 
 function App() {
@@ -113,14 +112,6 @@ function App() {
   element={
     <ProtectedRoute allowedRoles={["Employee"]}>
       <ViewAssets />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path="/ai-maintenance"
-  element={
-    <ProtectedRoute allowedRoles={["Admin", "IT Operations"]}>
-      <AIDashboard />
     </ProtectedRoute>
   }
 />

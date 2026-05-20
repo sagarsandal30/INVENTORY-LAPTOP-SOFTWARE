@@ -260,6 +260,8 @@
     height: 34px;
   }
 
+  
+
   .nv-settings-btn {
     display: none; /* Hide settings on small mobile as it's redundant with profile link */
   }
