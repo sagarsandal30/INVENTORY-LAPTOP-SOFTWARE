@@ -245,7 +245,7 @@ const handleSubmit = async (e) => {
                   <label className="form-label">
                     Processor <span className="required">*</span>
                   </label>
-                  <select
+                  {/* <select
                     name="brand"
                     value={formData.brand}
                     onChange={handleChange}
@@ -263,7 +263,7 @@ const handleSubmit = async (e) => {
                     <option value="Razer">Razer</option>
                     <option value="Samsung">Samsung</option>
                     <option value="Other">Other</option>
-                  </select>
+                  </select> */}
                   <input
                     type="text"
                     name="processor"
