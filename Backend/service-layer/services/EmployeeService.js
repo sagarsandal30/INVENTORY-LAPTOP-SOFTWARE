@@ -20,7 +20,7 @@ const clearEmployeeListCache = async () => {
   }
 
   if (keys.length > 0) {
-    await redisClient.del(keys);
+    await redisClient.del(...keys);
   }
 };
 

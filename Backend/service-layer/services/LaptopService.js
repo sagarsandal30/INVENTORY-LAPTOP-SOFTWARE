@@ -10,7 +10,7 @@ const clearLaptopModelCache = async () => {
     const keys = await redisClient.keys("laptopModel:list:*");
 
     if (keys.length > 0) {
-      await redisClient.del(keys);
+      await redisClient.del(...keys);
     }
   }
 };
