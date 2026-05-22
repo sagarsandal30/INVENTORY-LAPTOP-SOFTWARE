@@ -18,7 +18,11 @@ const clearIndividualSoftwareCache = async () => {
     MATCH: "individualSoftware:list:*",
     COUNT: 100,
   })) {
-    keys.push(key);
+    if (Array.isArray(key)) {
+      keys.push(...key);
+    } else {
+      keys.push(key);
+    }
   }
 
   if (keys.length > 0) {
