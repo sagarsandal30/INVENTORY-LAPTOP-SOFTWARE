@@ -5,7 +5,7 @@ const { getRedisClient } = require("../../Config/redisClient");
 // =============================
 // 🔹 Clear Cache
 // =============================
-const clearLaptopModelCache = async () => {
+  const clearLaptopModelCache = async () => {
   const redisClient = getRedisClient();
 
   if (!redisClient || !redisClient.isOpen) return;
@@ -27,7 +27,7 @@ const clearLaptopModelCache = async () => {
 // =============================
 // 🔹 CREATE Laptop Model
 // =============================
-const createLaptopModel = async (laptopData) => {
+  const createLaptopModel = async (laptopData) => {
   const redisClient = getRedisClient();
 
   const existingLaptop = await LaptopModel.findOne({
@@ -150,7 +150,7 @@ const getLaptopModel = async (page, limit, search) => {
   return result;
 };
 
-// =============================
+ // =============================
 // 🔹 GET ONE Laptop Model
 // =============================
 const getOneLaptopModel = async (laptopId) => {
@@ -200,7 +200,7 @@ const removeLaptopModel = async (laptopId) => {
   }
 
   return deleted;
-};
+} ;
 
 // =============================
 // 🔹 UPDATE Laptop Model
@@ -264,4 +264,4 @@ module.exports = {
   getOneLaptopModel,
   removeLaptopModel,
   modifyLaptopModel,
-};
+}; 

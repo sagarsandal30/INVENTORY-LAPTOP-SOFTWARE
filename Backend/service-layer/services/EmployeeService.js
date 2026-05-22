@@ -97,13 +97,14 @@ const getAllEmployee = async (page, limit, search, status) => {
   console.log("🧠 Employee from MongoDB");
 
   const totalEmployees = await Employee.countDocuments();
+  const totalFilteredEmployees = await Employee.countDocuments(query);
 
   const employees = await Employee.find(query)
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
 
-  const totalPages = Math.ceil(totalEmployees / limit);
+  const totalPages = Math.ceil(totalFilteredEmployees / limit);
 
   const active = await Employee.countDocuments({ status: "Active" });
   const inActive = await Employee.countDocuments({ status: "Inactive" });

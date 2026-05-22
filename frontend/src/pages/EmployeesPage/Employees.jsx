@@ -444,8 +444,8 @@ handleCloseModal();
                       </td>
                       <td>
                         <div className="emp-assets">
-                          <span className="emp-asset-chip">{emp.assignedLaptops} Laptop{emp.assignedLaptops !== 1 ? 's' : ''}</span>
-                          <span className="emp-asset-chip">{emp.assignedSoftware} Software</span>
+                          <span className="emp-asset-chip">{emp.laptopAssigned} Laptop{emp.laptopAssigned !== 1 ? 's' : ''}</span>
+                          <span className="emp-asset-chip">{emp.softwareAssigned} Software</span>
                         </div>
                       </td>
                       <td>
@@ -738,11 +738,11 @@ handleCloseModal();
                   <p className="emp-detail-section-title">Asset Assignment</p>
                   <div className="emp-asset-summary-row">
                     <div className="emp-asset-detail-chip" style={{ background: "#e0e7ff", color: "#6366f1" }}>
-                      <span className="emp-asset-chip-num">{showDetail.assignedLaptops}</span>
+                      <span className="emp-asset-chip-num">{showDetail.laptopAssigned}</span>
                       <span className="emp-asset-chip-label">Laptops</span>
                     </div>
                     <div className="emp-asset-detail-chip" style={{ background: "#fce7f3", color: "#ec4899" }}>
-                      <span className="emp-asset-chip-num">{showDetail.assignedSoftware}</span>
+                      <span className="emp-asset-chip-num">{showDetail.softwareAssigned}</span>
                       <span className="emp-asset-chip-label">Software Licenses</span>
                     </div>
                   </div>
